@@ -1,0 +1,15 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: taskflow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: taskflow
+    ports:
+      - "3307:3306"
+    volumes:
+      - taskflow-mysql-data:/var/lib/mysql
+
+volumes:
+  taskflow-mysql-data:
