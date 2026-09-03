@@ -36,6 +36,19 @@ services:
     networks:
       - taskflow-network
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: taskflow-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - taskflow-network
+
 volumes:
   taskflow-mysql-data:
 

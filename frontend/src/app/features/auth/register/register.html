@@ -1,0 +1,26 @@
+<div class="register-container">
+  <form (ngSubmit)="onSubmit()">
+    <h2>Register</h2>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <label>
+      Name
+      <input type="text" [(ngModel)]="name" name="name" required />
+    </label>
+
+    <label>
+      Email
+      <input type="email" [(ngModel)]="email" name="email" required />
+    </label>
+
+    <label>
+      Password
+      <input type="password" [(ngModel)]="password" name="password" required minlength="6" />
+    </label>
+
+    <button type="submit">Criar conta</button>
+  </form>
+</div>

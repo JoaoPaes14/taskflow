@@ -1,0 +1,74 @@
+<div class="dashboard">
+  <header>
+    <h1>TaskFlow</h1>
+    <div class="user">
+      <span>Olá, {{ name() }}</span>
+      <button (click)="logout()">Sair</button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="toolbar">
+    <button class="btn-primary" (click)="showCreate.set(!showCreate())">
+      {{ showCreate() ? 'Cancelar' : '+ Novo Projeto' }}
+    </button>
+  </section>
+
+  @if (showCreate()) {
+    <section class="card create-form">
+      <h3>Novo Projeto</h3>
+      <label>
+        Nome *
+        <input type="text" [(ngModel)]="newProjectName" name="newName" required />
+      </label>
+      <label>
+        Descrição
+        <textarea [(ngModel)]="newProjectDescription" name="newDesc" rows="3"></textarea>
+      </label>
+      <button class="btn-primary" (click)="onCreate()" [disabled]="!newProjectName">Criar</button>
+    </section>
+  }
+
+  @if (loading()) {
+    <p class="loading">Carregando...</p>
+  } @else if (projectsList().length === 0) {
+    <p class="empty">Nenhum projeto ainda. Crie o primeiro!</p>
+  } @else {
+    <section class="grid">
+      @for (p of projectsList(); track p.id) {
+        <div class="card project">
+          @if (editingId() === p.id) {
+            <label>
+              Nome
+              <input type="text" [(ngModel)]="editName" name="editName" />
+            </label>
+            <label>
+              Descrição
+              <textarea [(ngModel)]="editDescription" name="editDesc" rows="2"></textarea>
+            </label>
+            <div class="actions">
+              <button class="btn-primary" (click)="onUpdate()">Salvar</button>
+              <button class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          } @else {
+            <div class="project-header">
+              <h3>{{ p.name }}</h3>
+              <span class="status" [class.deleted]="p.status === 'DELETED'">{{ p.status }}</span>
+            </div>
+            @if (p.description) {
+              <p class="description">{{ p.description }}</p>
+            }
+            <p class="meta">Criado por {{ p.createdByName }}</p>
+            <div class="actions">
+              <button class="btn-secondary" (click)="startEdit(p)">Editar</button>
+              <button class="btn-danger" (click)="onDelete(p.id)">Excluir</button>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>
