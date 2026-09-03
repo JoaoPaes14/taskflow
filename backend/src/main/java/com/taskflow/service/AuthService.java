@@ -5,6 +5,8 @@ import com.taskflow.dto.AuthRequestDTO;
 import com.taskflow.dto.AuthResponseDTO;
 import com.taskflow.entity.Role;
 import com.taskflow.entity.User;
+import com.taskflow.exception.EmailAlreadyInUseException;
+import com.taskflow.exception.InvalidCredentialsException;
 import com.taskflow.exception.ResourceNotFoundException;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,7 @@ public class AuthService {
 
     public AuthResponseDTO register(AuthRequestDTO request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
+            throw new EmailAlreadyInUseException("Email already in use");
         }
 
         User user = User.builder()
@@ -35,7 +37,7 @@ public class AuthService {
 
         User saved = userRepository.save(user);
 
-        String token = jwtUtil.generateToken(saved.getId(), saved.getEmail());
+        String token = jwtUtil.generateToken(saved.getId(), saved.getEmail(), saved.getRole().name());
 
         return AuthResponseDTO.builder()
                 .token(token)
@@ -48,13 +50,13 @@ public class AuthService {
 
     public AuthResponseDTO login(AuthRequestDTO request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid credentials"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new ResourceNotFoundException("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getEmail());
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole().name());
 
         return AuthResponseDTO.builder()
                 .token(token)

@@ -20,15 +20,19 @@ public class JwtUtil {
     private long expiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(
-                java.util.Base64.getEncoder().encodeToString(secret.getBytes()));
-        return Keys.hmacShaKeyFor(keyBytes);
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(secret);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            return Keys.hmacShaKeyFor(secret.getBytes());
+        }
     }
 
-    public String generateToken(Long userId, String email) {
+    public String generateToken(Long userId, String email, String role) {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("email", email)
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey())
@@ -49,6 +53,10 @@ public class JwtUtil {
 
     public String extractEmail(String token) {
         return extractAll(token).get("email", String.class);
+    }
+
+    public String extractRole(String token) {
+        return extractAll(token).get("role", String.class);
     }
 
     public boolean isValid(String token) {

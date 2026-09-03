@@ -27,8 +27,10 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectResponseDTO> getProjectById(@PathVariable Long id) {
-        ProjectResponseDTO project = projectService.getProjectById(id);
+    public ResponseEntity<ProjectResponseDTO> getProjectById(
+            @PathVariable Long id,
+            @RequestAttribute("userId") Long userId) {
+        ProjectResponseDTO project = projectService.getProjectById(id, userId);
         return ResponseEntity.ok(project);
     }
 
@@ -45,6 +47,22 @@ public class ProjectController {
             @Valid @RequestBody ProjectRequestDTO request,
             @RequestAttribute("userId") Long userId) {
         ProjectResponseDTO project = projectService.updateProject(id, request, userId);
+        return ResponseEntity.ok(project);
+    }
+
+    @PatchMapping("/{id}/archive")
+    public ResponseEntity<ProjectResponseDTO> archiveProject(
+            @PathVariable Long id,
+            @RequestAttribute("userId") Long userId) {
+        ProjectResponseDTO project = projectService.archiveProject(id, userId);
+        return ResponseEntity.ok(project);
+    }
+
+    @PatchMapping("/{id}/restore")
+    public ResponseEntity<ProjectResponseDTO> restoreProject(
+            @PathVariable Long id,
+            @RequestAttribute("userId") Long userId) {
+        ProjectResponseDTO project = projectService.restoreProject(id, userId);
         return ResponseEntity.ok(project);
     }
 
