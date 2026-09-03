@@ -1,74 +1,153 @@
-<div class="dashboard">
-  <header>
-    <h1>TaskFlow</h1>
-    <div class="user">
-      <span>Olá, {{ name() }}</span>
-      <button (click)="logout()">Sair</button>
-    </div>
-  </header>
+<div class="app-layout">
+  <app-sidebar></app-sidebar>
 
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Visão geral dos seus projetos</p>
+      </div>
+      <button class="btn-primary" (click)="openCreate()">
+        <span class="btn-icon">+</span>
+        Novo Projeto
+      </button>
+    </header>
 
-  <section class="toolbar">
-    <button class="btn-primary" (click)="showCreate.set(!showCreate())">
-      {{ showCreate() ? 'Cancelar' : '+ Novo Projeto' }}
-    </button>
-  </section>
-
-  @if (showCreate()) {
-    <section class="card create-form">
-      <h3>Novo Projeto</h3>
-      <label>
-        Nome *
-        <input type="text" [(ngModel)]="newProjectName" name="newName" required />
-      </label>
-      <label>
-        Descrição
-        <textarea [(ngModel)]="newProjectDescription" name="newDesc" rows="3"></textarea>
-      </label>
-      <button class="btn-primary" (click)="onCreate()" [disabled]="!newProjectName">Criar</button>
-    </section>
-  }
-
-  @if (loading()) {
-    <p class="loading">Carregando...</p>
-  } @else if (projectsList().length === 0) {
-    <p class="empty">Nenhum projeto ainda. Crie o primeiro!</p>
-  } @else {
-    <section class="grid">
-      @for (p of projectsList(); track p.id) {
-        <div class="card project">
-          @if (editingId() === p.id) {
-            <label>
-              Nome
-              <input type="text" [(ngModel)]="editName" name="editName" />
-            </label>
-            <label>
-              Descrição
-              <textarea [(ngModel)]="editDescription" name="editDesc" rows="2"></textarea>
-            </label>
-            <div class="actions">
-              <button class="btn-primary" (click)="onUpdate()">Salvar</button>
-              <button class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
-            </div>
-          } @else {
-            <div class="project-header">
-              <h3>{{ p.name }}</h3>
-              <span class="status" [class.deleted]="p.status === 'DELETED'">{{ p.status }}</span>
-            </div>
-            @if (p.description) {
-              <p class="description">{{ p.description }}</p>
-            }
-            <p class="meta">Criado por {{ p.createdByName }}</p>
-            <div class="actions">
-              <button class="btn-secondary" (click)="startEdit(p)">Editar</button>
-              <button class="btn-danger" (click)="onDelete(p.id)">Excluir</button>
-            </div>
-          }
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-icon total">&#9776;</div>
+        <div>
+          <span class="stat-value">{{ totalProjects() }}</span>
+          <span class="stat-label">Total</span>
         </div>
-      }
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon active">&#10003;</div>
+        <div>
+          <span class="stat-value">{{ activeProjects() }}</span>
+          <span class="stat-label">Ativos</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon archived">&#9632;</div>
+        <div>
+          <span class="stat-value">{{ archivedProjects() }}</span>
+          <span class="stat-label">Arquivados</span>
+        </div>
+      </div>
     </section>
-  }
+
+    <section class="controls">
+      <div class="search-box">
+        <span class="search-icon">&#9906;</span>
+        <input
+          type="text"
+          placeholder="Buscar projetos..."
+          (input)="searchTerm.set($any($event.target).value)"
+        />
+      </div>
+      <div class="filters">
+        <button
+          class="filter-btn"
+          [class.active]="statusFilter() === 'ALL'"
+          (click)="setStatusFilter('ALL')"
+        >Todos</button>
+        <button
+          class="filter-btn"
+          [class.active]="statusFilter() === 'ACTIVE'"
+          (click)="setStatusFilter('ACTIVE')"
+        >Ativos</button>
+        <button
+          class="filter-btn"
+          [class.active]="statusFilter() === 'ARCHIVED'"
+          (click)="setStatusFilter('ARCHIVED')"
+        >Arquivados</button>
+      </div>
+    </section>
+
+    @if (loading()) {
+      <div class="state">
+        <div class="spinner"></div>
+        <p>Carregando projetos...</p>
+      </div>
+    } @else if (filteredProjects().length === 0) {
+      <div class="state empty">
+        <div class="empty-icon">&#128194;</div>
+        <h3>Nenhum projeto encontrado</h3>
+        <p>Crie seu primeiro projeto para começar a organizar suas tarefas.</p>
+        <button class="btn-primary" (click)="openCreate()">Criar projeto</button>
+      </div>
+    } @else {
+      <section class="projects-grid">
+        @for (p of filteredProjects(); track p.id) {
+          <div class="project-card">
+            <div class="project-avatar" [class.deleted]="p.status === 'DELETED'">
+              {{ getInitial(p.name) }}
+            </div>
+            <div class="project-body">
+              <div class="project-header">
+                <h3>{{ p.name }}</h3>
+                <span class="badge" [class.active]="p.status === 'ACTIVE'" [class.archived]="p.status === 'ARCHIVED'" [class.deleted]="p.status === 'DELETED'">
+                  {{ p.status }}
+                </span>
+              </div>
+              @if (p.description) {
+                <p class="description">{{ p.description }}</p>
+              }
+              <div class="project-footer">
+                <span class="creator">
+                  <span class="creator-avatar">{{ getInitial(p.createdByName) }}</span>
+                  {{ p.createdByName }}
+                </span>
+                @if (p.status !== 'DELETED') {
+                  <div class="actions">
+                    <button class="icon-btn edit" title="Editar" (click)="openEdit(p)">&#9998;</button>
+                    <button class="icon-btn delete" title="Excluir" (click)="onDelete(p)">&#128465;</button>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+    }
+  </main>
 </div>
+
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing() ? 'Editar projeto' : 'Novo projeto' }}</h2>
+        <button class="modal-close" (click)="closeModal()">&times;</button>
+      </div>
+      <form (ngSubmit)="submit()">
+        <div class="field">
+          <label for="name">Nome</label>
+          <input
+            type="text"
+            id="name"
+            placeholder="Ex: Lançamento do site"
+            [(ngModel)]="formName"
+            name="name"
+            required
+          />
+        </div>
+        <div class="field">
+          <label for="desc">Descrição</label>
+          <textarea
+            id="desc"
+            rows="4"
+            placeholder="Descreva o objetivo do projeto..."
+            [(ngModel)]="formDescription"
+            name="desc"
+          ></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">{{ isEditing() ? 'Salvar' : 'Criar' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

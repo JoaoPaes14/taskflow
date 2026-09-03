@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -10,20 +11,26 @@ import { AuthService } from '../../../core/services/auth.service';
   styleUrl: './login.scss',
 })
 export class LoginComponent {
+  private auth = inject(AuthService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
+
   email = '';
   password = '';
   error = signal('');
 
-  constructor(
-    private auth: AuthService,
-    private router: Router,
-  ) {}
-
   onSubmit(): void {
     this.error.set('');
     this.auth.login({ email: this.email, password: this.password }).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: (err) => this.error.set(err.error?.message || 'Login failed'),
+      next: () => {
+        this.toast.success('Login realizado com sucesso!');
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        const msg = err.error?.message || 'Falha no login. Verifique suas credenciais.';
+        this.error.set(msg);
+        this.toast.error(msg);
+      },
     });
   }
 }

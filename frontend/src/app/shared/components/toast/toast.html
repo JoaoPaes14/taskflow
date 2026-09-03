@@ -1,0 +1,12 @@
+@for (t of list(); track t.id) {
+  <div class="toast {{ t.type }}" (click)="dismiss(t.id)">
+    <span class="icon">
+      @switch (t.type) {
+        @case ('success') { &#10003; }
+        @case ('error') { &#10005; }
+        @default { &#9432; }
+      }
+    </span>
+    <span class="message">{{ t.message }}</span>
+  </div>
+}

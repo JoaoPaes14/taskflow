@@ -1,25 +1,89 @@
-<div class="login-container">
-  <form (ngSubmit)="onSubmit()">
-    <h2>Login</h2>
+<div class="auth-layout">
+  <div class="brand-side">
+    <div class="brand-content">
+      <div class="logo">
+        <div class="logo-icon">
+          <span>T</span>
+        </div>
+        <h1>TaskFlow</h1>
+      </div>
+      <p class="tagline">Gerencie seus projetos de forma simples e eficiente com sua equipe.</p>
+      <div class="features">
+        <div class="feature">
+          <span class="feature-icon">&check;</span>
+          <span>Organize projetos em um só lugar</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">&check;</span>
+          <span>Colabore com sua equipe em tempo real</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">&check;</span>
+          <span>Acompanhe o progresso de cada tarefa</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    @if (error()) {
-      <p class="error">{{ error() }}</p>
-    }
+  <div class="form-side">
+    <div class="form-card">
+      <h2>Bem-vindo de volta!</h2>
+      <p class="subtitle">Faça login para acessar sua conta</p>
 
-    <label>
-      Email
-      <input type="email" [(ngModel)]="email" name="email" required />
-    </label>
+      @if (error()) {
+        <div class="alert-error">
+          {{ error() }}
+        </div>
+      }
 
-    <label>
-      Password
-      <input type="password" [(ngModel)]="password" name="password" required />
-    </label>
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <div class="field">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="voce@exemplo.com"
+            [(ngModel)]="email"
+            required
+            email
+            #emailInput="ngModel"
+          />
+          @if (emailInput.invalid && emailInput.touched) {
+            <span class="field-error">Informe um email válido</span>
+          }
+        </div>
 
-    <button type="submit">Entrar</button>
+        <div class="field">
+          <label for="password">Senha</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            #passwordInput="ngModel"
+          />
+          @if (passwordInput.invalid && passwordInput.touched) {
+            <span class="field-error">A senha deve ter no mínimo 6 caracteres</span>
+          }
+        </div>
 
-    <p class="register-link">
-      Não tem conta? <a routerLink="/register">Criar conta</a>
-    </p>
-  </form>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="loginForm.invalid"
+        >
+          Entrar
+        </button>
+      </form>
+
+      <p class="switch-link">
+        Não tem conta?
+        <a routerLink="/register">Criar conta gratuita</a>
+      </p>
+    </div>
+  </div>
 </div>

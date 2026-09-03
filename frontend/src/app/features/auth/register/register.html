@@ -1,30 +1,105 @@
-<div class="register-container">
-  <form (ngSubmit)="onSubmit()">
-    <h2>Register</h2>
+<div class="auth-layout">
+  <div class="brand-side">
+    <div class="brand-content">
+      <div class="logo">
+        <div class="logo-icon">
+          <span>T</span>
+        </div>
+        <h1>TaskFlow</h1>
+      </div>
+      <p class="tagline">Comece a organizar seus projetos gratuitamente. Leva menos de um minuto.</p>
+      <div class="features">
+        <div class="feature">
+          <span class="feature-icon">&check;</span>
+          <span>Projetos ilimitados</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">&check;</span>
+          <span>Colaboração em equipe</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">&check;</span>
+          <span>Gratuito para sempre</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    @if (error()) {
-      <p class="error">{{ error() }}</p>
-    }
+  <div class="form-side">
+    <div class="form-card">
+      <h2>Criar conta</h2>
+      <p class="subtitle">Comece grátis agora mesmo</p>
 
-    <label>
-      Name
-      <input type="text" [(ngModel)]="name" name="name" required />
-    </label>
+      @if (error()) {
+        <div class="alert-error">
+          {{ error() }}
+        </div>
+      }
 
-    <label>
-      Email
-      <input type="email" [(ngModel)]="email" name="email" required />
-    </label>
+      <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+        <div class="field">
+          <label for="name">Nome</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Seu nome"
+            [(ngModel)]="name"
+            required
+            #nameInput="ngModel"
+          />
+          @if (nameInput.invalid && nameInput.touched) {
+            <span class="field-error">Informe seu nome</span>
+          }
+        </div>
 
-    <label>
-      Password
-      <input type="password" [(ngModel)]="password" name="password" required minlength="6" />
-    </label>
+        <div class="field">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="voce@exemplo.com"
+            [(ngModel)]="email"
+            required
+            email
+            #emailInput="ngModel"
+          />
+          @if (emailInput.invalid && emailInput.touched) {
+            <span class="field-error">Informe um email válido</span>
+          }
+        </div>
 
-    <button type="submit">Criar conta</button>
+        <div class="field">
+          <label for="password">Senha</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Mínimo 6 caracteres"
+            [(ngModel)]="password"
+            required
+            minlength="6"
+            #passwordInput="ngModel"
+          />
+          @if (passwordInput.invalid && passwordInput.touched) {
+            <span class="field-error">A senha deve ter no mínimo 6 caracteres</span>
+          }
+        </div>
 
-    <p class="login-link">
-      Já tem conta? <a routerLink="/login">Fazer login</a>
-    </p>
-  </form>
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="registerForm.invalid"
+        >
+          Criar conta
+        </button>
+      </form>
+
+      <p class="switch-link">
+        Já tem conta?
+        <a routerLink="/login">Fazer login</a>
+      </p>
+    </div>
+  </div>
 </div>
