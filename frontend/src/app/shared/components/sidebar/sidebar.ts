@@ -16,6 +16,7 @@ export class SidebarComponent {
   collapsed = signal(false);
 
   logout(): void {
+    if (!confirm('Deseja realmente sair?')) return;
     this.auth.logout();
   }
 }

@@ -47,12 +47,17 @@
     line-height: 1;
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--primary-dark);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 
@@ -67,8 +72,13 @@
   cursor: pointer;
   transition: background 0.15s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--bg);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 

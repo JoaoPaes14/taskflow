@@ -24,8 +24,15 @@ export class Dashboard implements OnInit {
   showModal = signal(false);
   isEditing = signal(false);
   editingId = signal<number | null>(null);
+  submitting = signal(false);
   formName = '';
   formDescription = '';
+
+  statusLabels: Record<string, string> = {
+    ACTIVE: 'Ativo',
+    ARCHIVED: 'Arquivado',
+    DELETED: 'Excluído',
+  };
 
   filteredProjects = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -62,6 +69,7 @@ export class Dashboard implements OnInit {
   openCreate(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
+    this.submitting.set(false);
     this.formName = '';
     this.formDescription = '';
     this.showModal.set(true);
@@ -70,6 +78,7 @@ export class Dashboard implements OnInit {
   openEdit(p: Project): void {
     this.isEditing.set(true);
     this.editingId.set(p.id);
+    this.submitting.set(false);
     this.formName = p.name;
     this.formDescription = p.description || '';
     this.showModal.set(true);
@@ -80,6 +89,7 @@ export class Dashboard implements OnInit {
   }
 
   submit(): void {
+    if (this.submitting()) return;
     if (!this.formName.trim()) {
       this.toast.error('O nome do projeto é obrigatório.');
       return;
@@ -90,27 +100,41 @@ export class Dashboard implements OnInit {
       description: this.formDescription.trim() || undefined,
     };
 
+    this.submitting.set(true);
+
+    const handleError = (err: unknown) => {
+      this.submitting.set(false);
+      this.toast.error(
+        (err as { error?: { message?: string } })?.error?.message || 'Erro ao salvar projeto.',
+      );
+    };
+
     if (this.isEditing()) {
       const id = this.editingId();
-      if (id === null) return;
+      if (id === null) {
+        this.submitting.set(false);
+        return;
+      }
       this.projects.update(id, payload).subscribe({
         next: (updated) => {
           this.projectsList.update((list) =>
             list.map((p) => (p.id === updated.id ? updated : p)),
           );
+          this.submitting.set(false);
           this.toast.success('Projeto atualizado com sucesso!');
           this.closeModal();
         },
-        error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar.'),
+        error: handleError,
       });
     } else {
       this.projects.create(payload).subscribe({
         next: (created) => {
           this.projectsList.update((list) => [created, ...list]);
+          this.submitting.set(false);
           this.toast.success('Projeto criado com sucesso!');
           this.closeModal();
         },
-        error: (err) => this.toast.error(err.error?.message || 'Erro ao criar.'),
+        error: handleError,
       });
     }
   }
@@ -132,5 +156,9 @@ export class Dashboard implements OnInit {
 
   getInitial(name: string): string {
     return name.charAt(0).toUpperCase();
+  }
+
+  statusLabel(status: string): string {
+    return this.statusLabels[status] || status;
   }
 }

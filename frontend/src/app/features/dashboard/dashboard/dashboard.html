@@ -88,7 +88,7 @@
               <div class="project-header">
                 <h3>{{ p.name }}</h3>
                 <span class="badge" [class.active]="p.status === 'ACTIVE'" [class.archived]="p.status === 'ARCHIVED'" [class.deleted]="p.status === 'DELETED'">
-                  {{ p.status }}
+                  {{ statusLabel(p.status) }}
                 </span>
               </div>
               @if (p.description) {
@@ -144,8 +144,10 @@
           ></textarea>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button type="submit" class="btn-primary">{{ isEditing() ? 'Salvar' : 'Criar' }}</button>
+          <button type="button" class="btn-secondary" [disabled]="submitting()" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="submitting()">
+            {{ submitting() ? 'Salvando...' : (isEditing() ? 'Salvar' : 'Criar') }}
+          </button>
         </div>
       </form>
     </div>
