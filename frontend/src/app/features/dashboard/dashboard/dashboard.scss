@@ -584,6 +584,78 @@
   }
 }
 
+.icon-btn.invite {
+  color: var(--primary, #4f46e5);
+}
+
+.invite-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted, #6b7280);
+  margin-bottom: 1.25rem;
+
+  strong {
+    color: var(--text, #1f2937);
+  }
+}
+
+.members-list {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border, #e5e7eb);
+  padding-top: 1rem;
+}
+
+.members-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #6b7280);
+  margin-bottom: 0.75rem;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  flex-shrink: 0;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text, #1f2937);
+}
+
+.member-email {
+  font-size: 0.8rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.members-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+  text-align: center;
+  padding: 1rem 0;
+}
+
 @media (max-width: 768px) {
   .main {
     padding: 1rem;

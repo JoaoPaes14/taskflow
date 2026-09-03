@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Project, ProjectRequest } from '../models/project.model';
+import { Project, ProjectMember, ProjectRequest } from '../models/project.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -31,6 +31,14 @@ export class ProjectService {
 
   restore(id: number): Observable<Project> {
     return this.http.patch<Project>(`${this.API}/${id}/restore`, {});
+  }
+
+  getMembers(id: number): Observable<ProjectMember[]> {
+    return this.http.get<ProjectMember[]>(`${this.API}/${id}/members`);
+  }
+
+  inviteMember(id: number, email: string): Observable<ProjectMember> {
+    return this.http.post<ProjectMember>(`${this.API}/${id}/members`, { email });
   }
 
   delete(id: number): Observable<void> {

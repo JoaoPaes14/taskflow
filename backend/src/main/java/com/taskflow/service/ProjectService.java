@@ -1,5 +1,7 @@
 package com.taskflow.service;
 
+import com.taskflow.dto.InviteMemberRequestDTO;
+import com.taskflow.dto.ProjectMemberDTO;
 import com.taskflow.dto.ProjectRequestDTO;
 import com.taskflow.dto.ProjectResponseDTO;
 import com.taskflow.entity.Project;
@@ -86,6 +88,41 @@ public class ProjectService {
         return projectRepository.findById(projectId)
                 .map(p -> p.getCreatedBy().getId().equals(userId))
                 .orElse(false);
+    }
+
+    public List<ProjectMemberDTO> getMembers(Long projectId, Long userId) {
+        requireAccess(projectId, userId);
+        return projectMemberRepository.findByProjectId(projectId).stream()
+                .map(ProjectMemberDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public ProjectMemberDTO inviteMember(Long projectId, InviteMemberRequestDTO request, Long userId) {
+        requireOwner(projectId, userId);
+
+        User member = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No user is registered with the email " + request.getEmail()));
+
+        if (projectMemberRepository.existsByProjectIdAndUserId(projectId, member.getId())) {
+            throw new IllegalArgumentException("This user is already a member of the project");
+        }
+
+        Project project = projectRepository.findActiveById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        ProjectMember saved = projectMemberRepository.save(ProjectMember.builder()
+                .project(project)
+                .user(member)
+                .build());
+
+        return ProjectMemberDTO.fromEntity(saved);
+    }
+
+    private void requireAccess(Long projectId, Long userId) {
+        if (!isMemberOrOwner(projectId, userId)) {
+            throw new UnauthorizedException("You don't have permission to access this project");
+        }
     }
 
     public void deleteProject(Long id, Long userId) {

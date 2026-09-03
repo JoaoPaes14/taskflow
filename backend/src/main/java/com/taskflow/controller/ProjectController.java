@@ -1,5 +1,7 @@
 package com.taskflow.controller;
 
+import com.taskflow.dto.InviteMemberRequestDTO;
+import com.taskflow.dto.ProjectMemberDTO;
 import com.taskflow.dto.ProjectRequestDTO;
 import com.taskflow.dto.ProjectResponseDTO;
 import com.taskflow.service.ProjectService;
@@ -64,6 +66,22 @@ public class ProjectController {
             @RequestAttribute("userId") Long userId) {
         ProjectResponseDTO project = projectService.restoreProject(id, userId);
         return ResponseEntity.ok(project);
+    }
+
+    @GetMapping("/{id}/members")
+    public ResponseEntity<List<ProjectMemberDTO>> getMembers(
+            @PathVariable Long id,
+            @RequestAttribute("userId") Long userId) {
+        return ResponseEntity.ok(projectService.getMembers(id, userId));
+    }
+
+    @PostMapping("/{id}/members")
+    public ResponseEntity<ProjectMemberDTO> inviteMember(
+            @PathVariable Long id,
+            @Valid @RequestBody InviteMemberRequestDTO request,
+            @RequestAttribute("userId") Long userId) {
+        ProjectMemberDTO member = projectService.inviteMember(id, request, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(member);
     }
 
     @DeleteMapping("/{id}")

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { Project, ProjectRequest } from '../../../core/models/project.model';
+import { Project, ProjectMember, ProjectRequest } from '../../../core/models/project.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -28,6 +28,12 @@ export class Dashboard implements OnInit {
   submitting = signal(false);
   formName = '';
   formDescription = '';
+
+  showInviteModal = signal(false);
+  inviteTarget = signal<Project | null>(null);
+  inviteEmail = '';
+  inviteSubmitting = signal(false);
+  members = signal<ProjectMember[]>([]);
 
   statusLabels: Record<string, string> = {
     ACTIVE: 'Ativo',
@@ -177,6 +183,52 @@ export class Dashboard implements OnInit {
       list.map((x) => (x.id === updated.id ? updated : x)),
     );
     this.toast.success(successMsg);
+  }
+
+  openInviteModal(p: Project): void {
+    this.inviteTarget.set(p);
+    this.inviteEmail = '';
+    this.inviteSubmitting.set(false);
+    this.members.set([]);
+    this.showInviteModal.set(true);
+    this.loadMembers(p.id);
+  }
+
+  closeInviteModal(): void {
+    this.showInviteModal.set(false);
+    this.inviteTarget.set(null);
+  }
+
+  loadMembers(projectId: number): void {
+    this.projects.getMembers(projectId).subscribe({
+      next: (list) => this.members.set(list),
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao carregar membros.'),
+    });
+  }
+
+  submitInvite(): void {
+    if (this.inviteSubmitting()) return;
+    const target = this.inviteTarget();
+    if (!target) return;
+    if (!this.inviteEmail.trim()) {
+      this.toast.error('Informe o email da pessoa que deseja convidar.');
+      return;
+    }
+
+    this.inviteSubmitting.set(true);
+
+    this.projects.inviteMember(target.id, this.inviteEmail.trim()).subscribe({
+      next: (member) => {
+        this.members.update((list) => [...list, member]);
+        this.inviteEmail = '';
+        this.inviteSubmitting.set(false);
+        this.toast.success(`${member.name} foi adicionado ao projeto!`);
+      },
+      error: (err) => {
+        this.inviteSubmitting.set(false);
+        this.toast.error(err.error?.message || 'Erro ao convidar usuário.');
+      },
+    });
   }
 
   setSortBy(s: 'recent' | 'name'): void {

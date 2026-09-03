@@ -13,3 +13,12 @@ export interface ProjectRequest {
   name: string;
   description?: string;
 }
+
+export interface ProjectMember {
+  id: number;
+  userId: number;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'MANAGER' | 'MEMBER';
+  joinedAt: string;
+}

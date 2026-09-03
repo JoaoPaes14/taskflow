@@ -9,7 +9,16 @@ import { Project } from '../../../core/models/project.model';
 describe('Dashboard', () => {
   let component: Dashboard;
   let fixture: ComponentFixture<Dashboard>;
-  let projects: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn>; archive: ReturnType<typeof vi.fn>; restore: ReturnType<typeof vi.fn> };
+  let projects: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn>; archive: ReturnType<typeof vi.fn>; restore: ReturnType<typeof vi.fn>; getMembers: ReturnType<typeof vi.fn>; inviteMember: ReturnType<typeof vi.fn> };
+
+  const mockMember = {
+    id: 10,
+    userId: 2,
+    name: 'Maria',
+    email: 'maria@x.com',
+    role: 'MEMBER' as const,
+    joinedAt: '2026-01-01T00:00:00',
+  };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
 
   const mockProjects: Project[] = [
@@ -43,6 +52,8 @@ describe('Dashboard', () => {
       delete: vi.fn(),
       archive: vi.fn(),
       restore: vi.fn(),
+      getMembers: vi.fn(),
+      inviteMember: vi.fn(),
     };
     toast = { success: vi.fn(), error: vi.fn() };
 
@@ -239,5 +250,60 @@ describe('Dashboard', () => {
     component.projectsList.set([older, newer]);
     component.setSortBy('recent');
     expect(component.filteredProjects()[0].name).toBe(newer.name);
+  });
+
+  it('should open invite modal and load existing members', () => {
+    projects.getMembers.mockReturnValue(of([mockMember]));
+
+    component.openInviteModal(mockProjects[0]);
+
+    expect(component.showInviteModal()).toBe(true);
+    expect(component.inviteTarget()?.id).toBe(1);
+    expect(component.inviteEmail).toBe('');
+    expect(projects.getMembers).toHaveBeenCalledWith(1);
+    expect(component.members()).toEqual([mockMember]);
+  });
+
+  it('should close invite modal', () => {
+    component.showInviteModal.set(true);
+    component.inviteTarget.set(mockProjects[0]);
+    component.closeInviteModal();
+    expect(component.showInviteModal()).toBe(false);
+    expect(component.inviteTarget()).toBeNull();
+  });
+
+  it('should reject inviting with empty email', () => {
+    component.inviteTarget.set(mockProjects[0]);
+    component.inviteEmail = '';
+    component.submitInvite();
+    expect(projects.inviteMember).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalled();
+  });
+
+  it('should invite a member by email and add them to the list', () => {
+    component.inviteTarget.set(mockProjects[0]);
+    component.inviteEmail = 'maria@x.com';
+    component.members.set([]);
+    projects.inviteMember.mockReturnValue(of(mockMember));
+
+    component.submitInvite();
+
+    expect(projects.inviteMember).toHaveBeenCalledWith(1, 'maria@x.com');
+    expect(component.members()).toEqual([mockMember]);
+    expect(component.inviteEmail).toBe('');
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('should show toast error when inviting fails', () => {
+    component.inviteTarget.set(mockProjects[0]);
+    component.inviteEmail = 'ghost@x.com';
+    projects.inviteMember.mockReturnValue(
+      throwError(() => ({ error: { message: 'Usuário não encontrado' } })),
+    );
+
+    component.submitInvite();
+
+    expect(toast.error).toHaveBeenCalledWith('Usuário não encontrado');
+    expect(component.inviteSubmitting()).toBe(false);
   });
 });

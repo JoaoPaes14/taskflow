@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProjectService } from './project.service';
-import { Project, ProjectRequest } from '../models/project.model';
+import { Project, ProjectMember, ProjectRequest } from '../models/project.model';
 
 describe('ProjectService', () => {
   let service: ProjectService;
@@ -104,5 +104,39 @@ describe('ProjectService', () => {
     const req = httpMock.expectOne('/api/projects/1/restore');
     expect(req.request.method).toBe('PATCH');
     req.flush(mockProject);
+  });
+
+  it('should GET members of a project', () => {
+    const members: ProjectMember[] = [
+      { id: 10, userId: 1, name: 'João', email: 'joao@x.com', role: 'ADMIN', joinedAt: '2026-01-01' },
+    ];
+
+    service.getMembers(1).subscribe((list) => {
+      expect(list).toEqual(members);
+    });
+
+    const req = httpMock.expectOne('/api/projects/1/members');
+    expect(req.request.method).toBe('GET');
+    req.flush(members);
+  });
+
+  it('should POST to invite a member by email', () => {
+    const member: ProjectMember = {
+      id: 11,
+      userId: 2,
+      name: 'Maria',
+      email: 'maria@x.com',
+      role: 'MEMBER',
+      joinedAt: '2026-01-02',
+    };
+
+    service.inviteMember(1, 'maria@x.com').subscribe((m) => {
+      expect(m).toEqual(member);
+    });
+
+    const req = httpMock.expectOne('/api/projects/1/members');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'maria@x.com' });
+    req.flush(member);
   });
 });

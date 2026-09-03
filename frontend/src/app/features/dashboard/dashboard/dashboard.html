@@ -123,6 +123,7 @@
                     } @else {
                       <button class="icon-btn restore" title="Restaurar" (click)="onRestore(p)">&#10227;</button>
                     }
+                    <button class="icon-btn invite" title="Convidar membro" (click)="openInviteModal(p)">&#128101;</button>
                     <button class="icon-btn edit" title="Editar" (click)="openEdit(p)">&#9998;</button>
                     <button class="icon-btn delete" title="Excluir" (click)="onDelete(p)">&#128465;</button>
                   </div>
@@ -136,42 +137,50 @@
   </main>
 </div>
 
-@if (showModal()) {
-  <div class="modal-overlay" (click)="closeModal()">
+@if (showInviteModal() && inviteTarget()) {
+  <div class="modal-overlay" (click)="closeInviteModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>{{ isEditing() ? 'Editar projeto' : 'Novo projeto' }}</h2>
-        <button class="modal-close" (click)="closeModal()">&times;</button>
+        <h2>Convidar membro</h2>
+        <button class="modal-close" (click)="closeInviteModal()">&times;</button>
       </div>
-      <form (ngSubmit)="submit()">
+      <p class="invite-subtitle">
+        Adicione uma pessoa ao projeto <strong>{{ inviteTarget()?.name }}</strong> pelo email cadastrado.
+      </p>
+      <form (ngSubmit)="submitInvite()">
         <div class="field">
-          <label for="name">Nome</label>
+          <label for="invite-email">Email do usuário</label>
           <input
-            type="text"
-            id="name"
-            placeholder="Ex: Lançamento do site"
-            [(ngModel)]="formName"
-            name="name"
+            type="email"
+            id="invite-email"
+            placeholder="pessoa@exemplo.com"
+            [(ngModel)]="inviteEmail"
+            name="inviteEmail"
             required
           />
         </div>
-        <div class="field">
-          <label for="desc">Descrição</label>
-          <textarea
-            id="desc"
-            rows="4"
-            placeholder="Descreva o objetivo do projeto..."
-            [(ngModel)]="formDescription"
-            name="desc"
-          ></textarea>
-        </div>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" [disabled]="submitting()" (click)="closeModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="submitting()">
-            {{ submitting() ? 'Salvando...' : (isEditing() ? 'Salvar' : 'Criar') }}
+          <button type="button" class="btn-secondary" [disabled]="inviteSubmitting()" (click)="closeInviteModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="inviteSubmitting()">
+            {{ inviteSubmitting() ? 'Convidando...' : 'Convidar' }}
           </button>
         </div>
       </form>
+
+      <div class="members-list">
+        <h3 class="members-title">Membros ({{ members().length }})</h3>
+        @for (m of members(); track m.id) {
+          <div class="member-row">
+            <span class="member-avatar">{{ getInitial(m.name) }}</span>
+            <div class="member-info">
+              <span class="member-name">{{ m.name }}</span>
+              <span class="member-email">{{ m.email }}</span>
+            </div>
+          </div>
+        } @empty {
+          <p class="members-empty">Nenhum membro neste projeto.</p>
+        }
+      </div>
     </div>
   </div>
 }
