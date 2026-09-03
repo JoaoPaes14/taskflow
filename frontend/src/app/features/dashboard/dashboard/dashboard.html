@@ -46,30 +46,47 @@
           (input)="searchTerm.set($any($event.target).value)"
         />
       </div>
-      <div class="filters">
-        <button
-          class="filter-btn"
-          [class.active]="statusFilter() === 'ALL'"
-          (click)="setStatusFilter('ALL')"
-        >Todos</button>
-        <button
-          class="filter-btn"
-          [class.active]="statusFilter() === 'ACTIVE'"
-          (click)="setStatusFilter('ACTIVE')"
-        >Ativos</button>
-        <button
-          class="filter-btn"
-          [class.active]="statusFilter() === 'ARCHIVED'"
-          (click)="setStatusFilter('ARCHIVED')"
-        >Arquivados</button>
+      <div class="controls-right">
+        <div class="sort-box">
+          <span class="sort-label">Ordenar</span>
+          <select [value]="sortBy()" (change)="setSortBy($any($event.target).value)">
+            <option value="recent">Mais recentes</option>
+            <option value="name">A-Z</option>
+          </select>
+        </div>
+        <div class="filters">
+          <button
+            class="filter-btn"
+            [class.active]="statusFilter() === 'ALL'"
+            (click)="setStatusFilter('ALL')"
+          >Todos</button>
+          <button
+            class="filter-btn"
+            [class.active]="statusFilter() === 'ACTIVE'"
+            (click)="setStatusFilter('ACTIVE')"
+          >Ativos</button>
+          <button
+            class="filter-btn"
+            [class.active]="statusFilter() === 'ARCHIVED'"
+            (click)="setStatusFilter('ARCHIVED')"
+          >Arquivados</button>
+        </div>
       </div>
     </section>
 
     @if (loading()) {
-      <div class="state">
-        <div class="spinner"></div>
-        <p>Carregando projetos...</p>
-      </div>
+      <section class="projects-grid">
+        @for (s of [1, 2, 3, 4]; track s) {
+          <div class="project-card skeleton">
+            <div class="project-avatar skeleton-block"></div>
+            <div class="project-body">
+              <div class="skeleton-line" style="width: 60%;"></div>
+              <div class="skeleton-line" style="width: 100%;"></div>
+              <div class="skeleton-line" style="width: 80%;"></div>
+            </div>
+          </div>
+        }
+      </section>
     } @else if (filteredProjects().length === 0) {
       <div class="state empty">
         <div class="empty-icon">&#128194;</div>
@@ -101,6 +118,11 @@
                 </span>
                 @if (p.status !== 'DELETED') {
                   <div class="actions">
+                    @if (p.status === 'ACTIVE') {
+                      <button class="icon-btn archive" title="Arquivar" (click)="onArchive(p)">&#128230;</button>
+                    } @else {
+                      <button class="icon-btn restore" title="Restaurar" (click)="onRestore(p)">&#10227;</button>
+                    }
                     <button class="icon-btn edit" title="Editar" (click)="openEdit(p)">&#9998;</button>
                     <button class="icon-btn delete" title="Excluir" (click)="onDelete(p)">&#128465;</button>
                   </div>

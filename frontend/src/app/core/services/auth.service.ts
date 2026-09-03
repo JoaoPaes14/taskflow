@@ -37,6 +37,14 @@ export class AuthService {
     );
   }
 
+  refreshProfile(): void {
+    if (!this.getToken()) return;
+    this.http.get<AuthResponse>(`${this.API}/me`).subscribe({
+      next: (res) => this.currentUser.set(res),
+      error: () => this.logout(),
+    });
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     this.currentUser.set(null);
@@ -60,7 +68,7 @@ export class AuthService {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         this.currentUser.set({
-          userId: payload.sub,
+          userId: Number(payload.sub),
           email: payload.email,
           name: '',
           role: 'MEMBER',

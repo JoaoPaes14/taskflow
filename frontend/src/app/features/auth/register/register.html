@@ -90,9 +90,9 @@
         <button
           type="submit"
           class="btn-primary"
-          [disabled]="registerForm.invalid"
+          [disabled]="registerForm.invalid || submitting()"
         >
-          Criar conta
+          {{ submitting() ? 'Criando conta...' : 'Criar conta' }}
         </button>
       </form>
 

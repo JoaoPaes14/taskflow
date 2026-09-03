@@ -25,6 +25,14 @@ export class ProjectService {
     return this.http.put<Project>(`${this.API}/${id}`, data);
   }
 
+  archive(id: number): Observable<Project> {
+    return this.http.patch<Project>(`${this.API}/${id}/archive`, {});
+  }
+
+  restore(id: number): Observable<Project> {
+    return this.http.patch<Project>(`${this.API}/${id}/restore`, {});
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.API}/${id}`);
   }

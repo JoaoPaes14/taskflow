@@ -65,4 +65,12 @@ describe('SidebarComponent', () => {
     component.logout();
     expect(logoutSpy).not.toHaveBeenCalled();
   });
+
+  it('should toggle the collapsed state', () => {
+    expect(component.collapsed()).toBe(false);
+    component.toggleCollapsed();
+    expect(component.collapsed()).toBe(true);
+    component.toggleCollapsed();
+    expect(component.collapsed()).toBe(false);
+  });
 });

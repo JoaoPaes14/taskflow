@@ -67,4 +67,20 @@ describe('RegisterComponent', () => {
     expect(component.error()).toBe('Email já em uso');
     expect(toast.error).toHaveBeenCalled();
   });
+
+  it('should prevent double submission while a request is in flight', () => {
+    auth.register.mockReturnValue({ subscribe: () => {} } as never);
+    component.name = 'João';
+    component.email = 'j@j.com';
+    component.password = '123456';
+    component.onSubmit();
+    component.onSubmit();
+    expect(auth.register).toHaveBeenCalledTimes(1);
+  });
+
+  it('should reset submitting on registration failure', () => {
+    auth.register.mockReturnValue(throwError(() => ({ error: { message: 'x' } })));
+    component.onSubmit();
+    expect(component.submitting()).toBe(false);
+  });
 });

@@ -20,6 +20,7 @@ export class Dashboard implements OnInit {
 
   searchTerm = signal('');
   statusFilter = signal<'ALL' | 'ACTIVE' | 'ARCHIVED' | 'DELETED'>('ALL');
+  sortBy = signal<'recent' | 'name'>('recent');
 
   showModal = signal(false);
   isEditing = signal(false);
@@ -36,11 +37,18 @@ export class Dashboard implements OnInit {
 
   filteredProjects = computed(() => {
     const term = this.searchTerm().toLowerCase();
-    return this.projectsList().filter((p) => {
+    const filtered = this.projectsList().filter((p) => {
       const matchesStatus = this.statusFilter() === 'ALL' || p.status === this.statusFilter();
       const matchesTerm = p.name.toLowerCase().includes(term);
       return matchesStatus && matchesTerm;
     });
+
+    if (this.sortBy() === 'name') {
+      return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return [...filtered].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
   });
 
   totalProjects = computed(() => this.projectsList().length);
@@ -148,6 +156,31 @@ export class Dashboard implements OnInit {
       },
       error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir.'),
     });
+  }
+
+  onArchive(p: Project): void {
+    this.projects.archive(p.id).subscribe({
+      next: (updated) => this.updateProjectInList(updated, 'Projeto arquivado.'),
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao arquivar.'),
+    });
+  }
+
+  onRestore(p: Project): void {
+    this.projects.restore(p.id).subscribe({
+      next: (updated) => this.updateProjectInList(updated, 'Projeto restaurado.'),
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao restaurar.'),
+    });
+  }
+
+  private updateProjectInList(updated: Project, successMsg: string): void {
+    this.projectsList.update((list) =>
+      list.map((x) => (x.id === updated.id ? updated : x)),
+    );
+    this.toast.success(successMsg);
+  }
+
+  setSortBy(s: 'recent' | 'name'): void {
+    this.sortBy.set(s);
   }
 
   setStatusFilter(f: 'ALL' | 'ACTIVE' | 'ARCHIVED' | 'DELETED'): void {

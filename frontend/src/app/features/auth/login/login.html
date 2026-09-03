@@ -74,9 +74,9 @@
         <button
           type="submit"
           class="btn-primary"
-          [disabled]="loginForm.invalid"
+          [disabled]="loginForm.invalid || submitting()"
         >
-          Entrar
+          {{ submitting() ? 'Entrando...' : 'Entrar' }}
         </button>
       </form>
 

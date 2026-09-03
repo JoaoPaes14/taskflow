@@ -19,9 +19,12 @@ export class RegisterComponent {
   email = '';
   password = '';
   error = signal('');
+  submitting = signal(false);
 
   onSubmit(): void {
+    if (this.submitting()) return;
     this.error.set('');
+    this.submitting.set(true);
     this.auth
       .register({ name: this.name, email: this.email, password: this.password })
       .subscribe({
@@ -33,6 +36,7 @@ export class RegisterComponent {
           const msg = err.error?.message || 'Não foi possível criar a conta.';
           this.error.set(msg);
           this.toast.error(msg);
+          this.submitting.set(false);
         },
       });
   }

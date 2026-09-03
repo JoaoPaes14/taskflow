@@ -80,7 +80,7 @@ describe('AuthService', () => {
     // Call loadFromStorage directly (singleton already instantiated in beforeEach)
     service['loadFromStorage']();
     expect(service.isLoggedIn()).toBe(true);
-    expect(service.currentUser()?.userId).toBe('5');
+    expect(service.currentUser()?.userId).toBe(5);
     expect(service.currentUser()?.email).toBe('x@x.com');
   });
 

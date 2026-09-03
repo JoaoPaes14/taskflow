@@ -18,9 +18,12 @@ export class LoginComponent {
   email = '';
   password = '';
   error = signal('');
+  submitting = signal(false);
 
   onSubmit(): void {
+    if (this.submitting()) return;
     this.error.set('');
+    this.submitting.set(true);
     this.auth.login({ email: this.email, password: this.password }).subscribe({
       next: () => {
         this.toast.success('Login realizado com sucesso!');
@@ -30,6 +33,7 @@ export class LoginComponent {
         const msg = err.error?.message || 'Falha no login. Verifique suas credenciais.';
         this.error.set(msg);
         this.toast.error(msg);
+        this.submitting.set(false);
       },
     });
   }

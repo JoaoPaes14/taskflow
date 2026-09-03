@@ -1,9 +1,14 @@
 <aside class="sidebar" [class.collapsed]="collapsed()">
-  <div class="logo">
-    <div class="logo-icon">T</div>
-    @if (!collapsed()) {
-      <span>TaskFlow</span>
-    }
+  <div class="sidebar-head">
+    <div class="logo">
+      <div class="logo-icon">T</div>
+      @if (!collapsed()) {
+        <span>TaskFlow</span>
+      }
+    </div>
+    <button class="collapse-btn" (click)="toggleCollapsed()" [attr.title]="collapsed() ? 'Expandir' : 'Recolher'">
+      @if (collapsed()) { &#187; } @else { &#171; }
+    </button>
   </div>
 
   <nav class="nav">
@@ -26,10 +31,13 @@
     </div>
     @if (!collapsed()) {
       <div class="user-info">
-        <span class="name">{{ user()?.name }}</span>
+        <span class="name">{{ user()?.name || 'Usuário' }}</span>
+        <span class="role">{{ (user()?.role || 'MEMBER') | titlecase }}</span>
         <span class="email">{{ user()?.email }}</span>
         <button class="logout" (click)="logout()">Sair</button>
       </div>
+    } @else {
+      <button class="logout-icon" title="Sair" (click)="logout()">&#10148;</button>
     }
   </div>
 </aside>

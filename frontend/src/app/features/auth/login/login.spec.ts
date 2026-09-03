@@ -66,4 +66,19 @@ describe('LoginComponent', () => {
     expect(component.error()).toBe('Credenciais inválidas');
     expect(toast.error).toHaveBeenCalled();
   });
+
+  it('should prevent double submission while a request is in flight', () => {
+    auth.login.mockReturnValue({ subscribe: () => {} } as never);
+    component.email = 'j@j.com';
+    component.password = '123456';
+    component.onSubmit();
+    component.onSubmit();
+    expect(auth.login).toHaveBeenCalledTimes(1);
+  });
+
+  it('should reset submitting on login failure', () => {
+    auth.login.mockReturnValue(throwError(() => ({ error: { message: 'x' } })));
+    component.onSubmit();
+    expect(component.submitting()).toBe(false);
+  });
 });

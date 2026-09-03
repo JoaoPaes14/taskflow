@@ -85,4 +85,24 @@ describe('ProjectService', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush(null);
   });
+
+  it('should PATCH to archive a project', () => {
+    service.archive(1).subscribe((p) => {
+      expect(p).toEqual(mockProject);
+    });
+
+    const req = httpMock.expectOne('/api/projects/1/archive');
+    expect(req.request.method).toBe('PATCH');
+    req.flush(mockProject);
+  });
+
+  it('should PATCH to restore a project', () => {
+    service.restore(1).subscribe((p) => {
+      expect(p).toEqual(mockProject);
+    });
+
+    const req = httpMock.expectOne('/api/projects/1/restore');
+    expect(req.request.method).toBe('PATCH');
+    req.flush(mockProject);
+  });
 });

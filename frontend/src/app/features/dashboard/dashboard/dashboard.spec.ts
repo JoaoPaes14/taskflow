@@ -9,7 +9,7 @@ import { Project } from '../../../core/models/project.model';
 describe('Dashboard', () => {
   let component: Dashboard;
   let fixture: ComponentFixture<Dashboard>;
-  let projects: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn> };
+  let projects: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn>; archive: ReturnType<typeof vi.fn>; restore: ReturnType<typeof vi.fn> };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
 
   const mockProjects: Project[] = [
@@ -41,6 +41,8 @@ describe('Dashboard', () => {
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      archive: vi.fn(),
+      restore: vi.fn(),
     };
     toast = { success: vi.fn(), error: vi.fn() };
 
@@ -198,5 +200,44 @@ describe('Dashboard', () => {
     component.submit();
     expect(component.submitting()).toBe(true);
     expect(projects.create).toHaveBeenCalled();
+  });
+
+  it('should archive a project', () => {
+    component.projectsList.set(mockProjects);
+    const archived = { ...mockProjects[0], status: 'ARCHIVED' as const };
+    projects.archive.mockReturnValue(of(archived));
+
+    component.onArchive(mockProjects[0]);
+
+    expect(projects.archive).toHaveBeenCalledWith(1);
+    expect(component.projectsList()[0].status).toBe('ARCHIVED');
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('should restore a project', () => {
+    component.projectsList.set(mockProjects);
+    const restored = { ...mockProjects[1], status: 'ACTIVE' as const };
+    projects.restore.mockReturnValue(of(restored));
+
+    component.onRestore(mockProjects[1]);
+
+    expect(projects.restore).toHaveBeenCalledWith(2);
+    expect(component.projectsList()[1].status).toBe('ACTIVE');
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('should sort projects by name', () => {
+    component.projectsList.set([mockProjects[0], mockProjects[1]]);
+    component.setSortBy('name');
+    expect(component.filteredProjects()[0].name).toBe('App');
+    expect(component.filteredProjects()[1].name).toBe('Site');
+  });
+
+  it('should sort projects by most recent by default', () => {
+    const older = { ...mockProjects[0], updatedAt: '2026-01-01T00:00:00' };
+    const newer = { ...mockProjects[1], updatedAt: '2026-02-01T00:00:00' };
+    component.projectsList.set([older, newer]);
+    component.setSortBy('recent');
+    expect(component.filteredProjects()[0].name).toBe(newer.name);
   });
 });
