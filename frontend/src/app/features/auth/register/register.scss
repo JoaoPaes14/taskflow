@@ -51,5 +51,20 @@
       font-size: 0.875rem;
       margin: 0;
     }
+
+    .login-link {
+      font-size: 0.875rem;
+      text-align: center;
+      margin: 0;
+
+      a {
+        color: #1976d2;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
   }
 }
