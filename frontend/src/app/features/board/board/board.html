@@ -1,0 +1,142 @@
+<div class="app-layout">
+  <app-sidebar></app-sidebar>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="btn-back" (click)="routerBack()">&#8592;</button>
+        <div>
+          <h1 class="page-title">{{ project()?.name || 'Projeto' }}</h1>
+          <p class="page-subtitle">Quadro de tarefas</p>
+        </div>
+      </div>
+    </header>
+
+    @if (loading() && tasksList().length === 0) {
+      <div class="state">
+        <div class="spinner"></div>
+        <p>Carregando tarefas...</p>
+      </div>
+    } @else {
+      <section class="board">
+        @for (col of columns; track col.key) {
+          <div
+            class="board-column"
+            (dragover)="$event.preventDefault()"
+            (drop)="onDrop($event, col.key)"
+          >
+            <div class="column-header">
+              <h2>{{ col.label }}</h2>
+              <span class="column-count">{{ getTasks(col.key).length }}</span>
+              <button class="icon-btn add" title="Adicionar tarefa" (click)="openCreate(col.key)">+</button>
+            </div>
+
+            <div class="column-body">
+              @for (task of getTasks(col.key); track task.id) {
+                <div
+                  class="task-card"
+                  [class.done]="task.status === 'DONE'"
+                  [class.overdue]="isOverdue(task)"
+                  draggable="true"
+                  (dragstart)="onDragStart($event, task)"
+                >
+                  <div class="task-card-top">
+                    <span class="priority-badge" [class]="task.priority.toLowerCase()">
+                      {{ priorityLabel(task.priority) }}
+                    </span>
+                    @if (isOverdue(task)) {
+                      <span class="overdue-badge">Atrasado</span>
+                    }
+                  </div>
+
+                  <h3 class="task-title">{{ task.title }}</h3>
+                  @if (task.description) {
+                    <p class="task-desc">{{ task.description }}</p>
+                  }
+
+                  <div class="task-meta">
+                    @if (task.assigneeName) {
+                      <span class="assignee" [title]="task.assigneeName">
+                        <span class="assignee-avatar">{{ getInitial(task.assigneeName) }}</span>
+                        {{ task.assigneeName }}
+                      </span>
+                    }
+                    @if (task.dueDate) {
+                      <span class="due" [class.overdue]="isOverdue(task)">&#128197; {{ task.dueDate }}</span>
+                    }
+                  </div>
+
+                  <div class="task-actions">
+                    @if (task.status !== 'TODO') {
+                      <button class="mini-btn" title="Mover para A fazer" (click)="changeStatus(task, 'TODO')">&#8592;</button>
+                    }
+                    @if (task.status !== 'IN_PROGRESS') {
+                      <button class="mini-btn" title="Em progresso" (click)="changeStatus(task, 'IN_PROGRESS')">&#9654;</button>
+                    }
+                    @if (task.status !== 'DONE') {
+                      <button class="mini-btn" title="Concluir" (click)="changeStatus(task, 'DONE')">&#10003;</button>
+                    }
+                    <button class="mini-btn edit" title="Editar" (click)="openEdit(task)">&#9998;</button>
+                    <button class="mini-btn delete" title="Excluir" (click)="onDelete(task)">&#128465;</button>
+                  </div>
+                </div>
+              } @empty {
+                <p class="column-empty">Nenhuma tarefa</p>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+  </main>
+</div>
+
+@if (showModal() && project()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing() ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
+        <button class="modal-close" (click)="closeModal()">&times;</button>
+      </div>
+      <form (ngSubmit)="submit()">
+        <div class="field">
+          <label for="task-title">Título</label>
+          <input type="text" id="task-title" [(ngModel)]="formTitle" name="taskTitle" required />
+        </div>
+        <div class="field">
+          <label for="task-desc">Descrição</label>
+          <textarea id="task-desc" rows="3" [(ngModel)]="formDescription" name="taskDesc"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="task-priority">Prioridade</label>
+            <select id="task-priority" [(ngModel)]="formPriority" name="taskPriority">
+              <option value="LOW">Baixa</option>
+              <option value="MEDIUM">Média</option>
+              <option value="HIGH">Alta</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="task-due">Vencimento</label>
+            <input type="date" id="task-due" [(ngModel)]="formDueDate" name="taskDue" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="task-assignee">Responsável</label>
+          <select id="task-assignee" [(ngModel)]="formAssigneeId" name="taskAssignee">
+            <option [ngValue]="null">Sem responsável</option>
+            @for (m of members(); track m.userId) {
+              <option [ngValue]="m.userId">{{ m.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" [disabled]="submitting()" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="submitting()">
+            {{ submitting() ? 'Salvando...' : (isEditing() ? 'Salvar' : 'Criar') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

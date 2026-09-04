@@ -119,6 +119,7 @@
                 @if (p.status !== 'DELETED') {
                   <div class="actions">
                     @if (p.status === 'ACTIVE') {
+                      <button class="icon-btn board" title="Abrir quadro" (click)="openBoard(p)">&#9638;</button>
                       <button class="icon-btn archive" title="Arquivar" (click)="onArchive(p)">&#128230;</button>
                     } @else {
                       <button class="icon-btn restore" title="Restaurar" (click)="onRestore(p)">&#10227;</button>
@@ -173,7 +174,9 @@
           <div class="member-row">
             <span class="member-avatar">{{ getInitial(m.name) }}</span>
             <div class="member-info">
-              <span class="member-name">{{ m.name }}</span>
+              <span class="member-name">{{ m.name }}
+                <span class="role-badge" [class.owner]="m.projectRole === 'OWNER'">{{ roleLabel(m.projectRole) }}</span>
+              </span>
               <span class="member-email">{{ m.email }}</span>
             </div>
           </div>

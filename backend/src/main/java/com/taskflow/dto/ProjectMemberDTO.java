@@ -1,6 +1,7 @@
 package com.taskflow.dto;
 
 import com.taskflow.entity.ProjectMember;
+import com.taskflow.entity.ProjectRole;
 import com.taskflow.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,7 @@ public class ProjectMemberDTO {
     private String name;
     private String email;
     private Role role;
+    private ProjectRole projectRole;
     private LocalDateTime joinedAt;
 
     public static ProjectMemberDTO fromEntity(ProjectMember member) {
@@ -29,6 +31,7 @@ public class ProjectMemberDTO {
                 .name(member.getUser().getName())
                 .email(member.getUser().getEmail())
                 .role(member.getUser().getRole())
+                .projectRole(member.getRole())
                 .joinedAt(member.getJoinedAt())
                 .build();
     }

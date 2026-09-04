@@ -20,5 +20,6 @@ export interface ProjectMember {
   name: string;
   email: string;
   role: 'ADMIN' | 'MANAGER' | 'MEMBER';
+  projectRole: 'OWNER' | 'MEMBER';
   joinedAt: string;
 }

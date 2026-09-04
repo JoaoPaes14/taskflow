@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -14,6 +15,7 @@ import { Project, ProjectMember, ProjectRequest } from '../../../core/models/pro
 export class Dashboard implements OnInit {
   private projects = inject(ProjectService);
   private toast = inject(ToastService);
+  private router = inject(Router);
 
   projectsList = signal<Project[]>([]);
   loading = signal(false);
@@ -245,5 +247,13 @@ export class Dashboard implements OnInit {
 
   statusLabel(status: string): string {
     return this.statusLabels[status] || status;
+  }
+
+  openBoard(p: Project): void {
+    this.router.navigate(['/projects', p.id]);
+  }
+
+  roleLabel(role: string): string {
+    return role === 'OWNER' ? 'Proprietário' : 'Membro';
   }
 }

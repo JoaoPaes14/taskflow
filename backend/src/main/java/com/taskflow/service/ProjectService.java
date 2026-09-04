@@ -6,6 +6,7 @@ import com.taskflow.dto.ProjectRequestDTO;
 import com.taskflow.dto.ProjectResponseDTO;
 import com.taskflow.entity.Project;
 import com.taskflow.entity.ProjectMember;
+import com.taskflow.entity.ProjectRole;
 import com.taskflow.entity.User;
 import com.taskflow.exception.ResourceNotFoundException;
 import com.taskflow.exception.UnauthorizedException;
@@ -44,6 +45,7 @@ public class ProjectService {
         ProjectMember member = ProjectMember.builder()
                 .project(saved)
                 .user(user)
+                .role(ProjectRole.OWNER)
                 .build();
         projectMemberRepository.save(member);
 
