@@ -1,13 +1,23 @@
 <aside class="sidebar" [class.collapsed]="collapsed()">
   <div class="sidebar-head">
     <div class="logo">
-      <div class="logo-icon">T</div>
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
       @if (!collapsed()) {
-        <span>TaskFlow</span>
+        <span class="logo-text">TaskFlow</span>
       }
     </div>
     <button class="collapse-btn" (click)="toggleCollapsed()" [attr.title]="collapsed() ? 'Expandir' : 'Recolher'">
-      @if (collapsed()) { &#187; } @else { &#171; }
+      @if (collapsed()) {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      } @else {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      }
     </button>
   </div>
 
@@ -18,26 +28,47 @@
       [routerLinkActiveOptions]="{ exact: true }"
       class="nav-item"
     >
-      <span class="nav-icon">&#9632;</span>
+      <span class="nav-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </span>
       @if (!collapsed()) {
         <span>Dashboard</span>
       }
     </a>
   </nav>
 
-  <div class="user-area">
-    <div class="avatar">
-      {{ (user()?.name || 'U').charAt(0).toUpperCase() }}
-    </div>
-    @if (!collapsed()) {
-      <div class="user-info">
-        <span class="name">{{ user()?.name || 'Usuário' }}</span>
-        <span class="role">{{ (user()?.role || 'MEMBER') | titlecase }}</span>
-        <span class="email">{{ user()?.email }}</span>
-        <button class="logout" (click)="logout()">Sair</button>
+  <div class="sidebar-footer">
+    <div class="user-area">
+      <div class="avatar">
+        {{ (user()?.name || 'U').charAt(0).toUpperCase() }}
       </div>
-    } @else {
-      <button class="logout-icon" title="Sair" (click)="logout()">&#10148;</button>
-    }
+      @if (!collapsed()) {
+        <div class="user-info">
+          <span class="name">{{ user()?.name || 'Usuário' }}</span>
+          <span class="role">{{ (user()?.role || 'MEMBER') | titlecase }}</span>
+          <span class="email">{{ user()?.email }}</span>
+        </div>
+      }
+      <button
+        class="logout-btn"
+        [class.icon-only]="collapsed()"
+        title="Sair"
+        (click)="logout()"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        @if (!collapsed()) {
+          <span>Sair</span>
+        }
+      </button>
+    </div>
   </div>
 </aside>

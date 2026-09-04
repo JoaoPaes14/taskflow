@@ -11,7 +11,7 @@ import { ProjectTask, TaskPriority, TaskStatus } from '../../../core/models/task
 const COLUMNS: { key: TaskStatus; label: string }[] = [
   { key: 'TODO', label: 'A fazer' },
   { key: 'IN_PROGRESS', label: 'Em progresso' },
-  { key: 'DONE', label: 'Concluído' },
+  { key: 'DONE', label: 'Concluido' },
 ];
 
 @Component({
@@ -44,6 +44,9 @@ export class Board implements OnInit {
   formAssigneeId: number | null = null;
 
   columns = COLUMNS;
+
+  draggingId: number | null = null;
+  dragOverColumn = signal<TaskStatus | null>(null);
 
   board = computed(() => {
     const byStatus = new Map<TaskStatus, ProjectTask[]>();
@@ -121,7 +124,7 @@ export class Board implements OnInit {
   submit(): void {
     if (this.submitting()) return;
     if (!this.formTitle.trim()) {
-      this.toast.error('O título da tarefa é obrigatório.');
+      this.toast.error('O titulo da tarefa e obrigatorio.');
       return;
     }
     const project = this.project();
@@ -182,7 +185,7 @@ export class Board implements OnInit {
     this.tasks.deleteTask(task.id).subscribe({
       next: () => {
         this.tasksList.update((list) => list.filter((t) => t.id !== task.id));
-        this.toast.success('Tarefa excluída.');
+        this.toast.success('Tarefa excluida.');
       },
       error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir.'),
     });
@@ -195,10 +198,24 @@ export class Board implements OnInit {
   onDragStart(event: DragEvent, task: ProjectTask): void {
     this.draggingId = task.id;
     event.dataTransfer?.setData('text/plain', String(task.id));
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onDragOver(event: DragEvent, status: TaskStatus): void {
+    event.preventDefault();
+    event.dataTransfer!.dropEffect = 'move';
+    this.dragOverColumn.set(status);
+  }
+
+  onDragLeave(status: TaskStatus): void {
+    if (this.dragOverColumn() === status) {
+      this.dragOverColumn.set(null);
+    }
   }
 
   onDrop(event: DragEvent, status: TaskStatus): void {
     event.preventDefault();
+    this.dragOverColumn.set(null);
     if (this.draggingId !== null) {
       const task = this.tasksList().find((t) => t.id === this.draggingId);
       if (task && task.status !== status) {
@@ -208,12 +225,17 @@ export class Board implements OnInit {
     this.draggingId = null;
   }
 
+  onDragEnd(): void {
+    this.draggingId = null;
+    this.dragOverColumn.set(null);
+  }
+
   getInitial(name: string): string {
     return (name || '?').charAt(0).toUpperCase();
   }
 
   priorityLabel(p: TaskPriority): string {
-    return { LOW: 'Baixa', MEDIUM: 'Média', HIGH: 'Alta' }[p] || p;
+    return { LOW: 'Baixa', MEDIUM: 'Media', HIGH: 'Alta' }[p] || p;
   }
 
   assigneeName(userId: number | undefined): string {
@@ -234,5 +256,4 @@ export class Board implements OnInit {
   }
 
   private pendingStatus: TaskStatus = 'TODO';
-  private draggingId: number | null = null;
 }

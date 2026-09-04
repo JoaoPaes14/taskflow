@@ -4,7 +4,9 @@
   <main class="main">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="btn-back" (click)="routerBack()">&#8592;</button>
+        <button class="btn-back" (click)="routerBack()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
         <div>
           <h1 class="page-title">{{ project()?.name || 'Projeto' }}</h1>
           <p class="page-subtitle">Quadro de tarefas</p>
@@ -19,33 +21,46 @@
       </div>
     } @else {
       <section class="board">
-        @for (col of columns; track col.key) {
+        @for (col of columns; track col.key; let colIndex = $index) {
           <div
             class="board-column"
-            (dragover)="$event.preventDefault()"
+            [class.drag-over]="dragOverColumn() === col.key"
+            (dragover)="onDragOver($event, col.key)"
+            (dragleave)="onDragLeave(col.key)"
             (drop)="onDrop($event, col.key)"
+            [style.animation-delay]="(colIndex * 0.08) + 's'"
           >
-            <div class="column-header">
-              <h2>{{ col.label }}</h2>
-              <span class="column-count">{{ getTasks(col.key).length }}</span>
-              <button class="icon-btn add" title="Adicionar tarefa" (click)="openCreate(col.key)">+</button>
+            <div class="column-header" [class]="'col-' + col.key.toLowerCase()">
+              <div class="column-title-row">
+                <h2>{{ col.label }}</h2>
+                <span class="column-count">{{ getTasks(col.key).length }}</span>
+              </div>
+              <button class="column-add-btn" title="Adicionar tarefa" (click)="openCreate(col.key)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
             </div>
 
             <div class="column-body">
-              @for (task of getTasks(col.key); track task.id) {
+              @for (task of getTasks(col.key); track task.id; let taskIndex = $index) {
                 <div
                   class="task-card"
                   [class.done]="task.status === 'DONE'"
                   [class.overdue]="isOverdue(task)"
+                  [class.dragging]="draggingId === task.id"
                   draggable="true"
                   (dragstart)="onDragStart($event, task)"
+                  (dragend)="onDragEnd()"
+                  [style.animation-delay]="(taskIndex * 0.03) + 's'"
                 >
                   <div class="task-card-top">
                     <span class="priority-badge" [class]="task.priority.toLowerCase()">
                       {{ priorityLabel(task.priority) }}
                     </span>
                     @if (isOverdue(task)) {
-                      <span class="overdue-badge">Atrasado</span>
+                      <span class="overdue-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Atrasado
+                      </span>
                     }
                   </div>
 
@@ -62,26 +77,46 @@
                       </span>
                     }
                     @if (task.dueDate) {
-                      <span class="due" [class.overdue]="isOverdue(task)">&#128197; {{ task.dueDate }}</span>
+                      <span class="due" [class.overdue]="isOverdue(task)">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {{ task.dueDate }}
+                      </span>
                     }
                   </div>
 
                   <div class="task-actions">
                     @if (task.status !== 'TODO') {
-                      <button class="mini-btn" title="Mover para A fazer" (click)="changeStatus(task, 'TODO')">&#8592;</button>
+                      <button class="mini-btn" title="Mover para A fazer" (click)="changeStatus(task, 'TODO')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                      </button>
                     }
                     @if (task.status !== 'IN_PROGRESS') {
-                      <button class="mini-btn" title="Em progresso" (click)="changeStatus(task, 'IN_PROGRESS')">&#9654;</button>
+                      <button class="mini-btn" title="Em progresso" (click)="changeStatus(task, 'IN_PROGRESS')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
                     }
                     @if (task.status !== 'DONE') {
-                      <button class="mini-btn" title="Concluir" (click)="changeStatus(task, 'DONE')">&#10003;</button>
+                      <button class="mini-btn success" title="Concluir" (click)="changeStatus(task, 'DONE')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </button>
                     }
-                    <button class="mini-btn edit" title="Editar" (click)="openEdit(task)">&#9998;</button>
-                    <button class="mini-btn delete" title="Excluir" (click)="onDelete(task)">&#128465;</button>
+                    <span class="mini-separator"></span>
+                    <button class="mini-btn edit" title="Editar" (click)="openEdit(task)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="mini-btn delete" title="Excluir" (click)="onDelete(task)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
                   </div>
                 </div>
               } @empty {
-                <p class="column-empty">Nenhuma tarefa</p>
+                <div class="column-empty">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                  </svg>
+                  <p>Nenhuma tarefa</p>
+                  <button class="empty-add" (click)="openCreate(col.key)">Adicionar tarefa</button>
+                </div>
               }
             </div>
           </div>
@@ -101,18 +136,18 @@
       <form (ngSubmit)="submit()">
         <div class="field">
           <label for="task-title">Título</label>
-          <input type="text" id="task-title" [(ngModel)]="formTitle" name="taskTitle" required />
+          <input type="text" id="task-title" [(ngModel)]="formTitle" name="taskTitle" placeholder="Nome da tarefa" required />
         </div>
         <div class="field">
           <label for="task-desc">Descrição</label>
-          <textarea id="task-desc" rows="3" [(ngModel)]="formDescription" name="taskDesc"></textarea>
+          <textarea id="task-desc" rows="3" [(ngModel)]="formDescription" name="taskDesc" placeholder="Detalhes da tarefa (opcional)"></textarea>
         </div>
         <div class="field-row">
           <div class="field">
             <label for="task-priority">Prioridade</label>
             <select id="task-priority" [(ngModel)]="formPriority" name="taskPriority">
               <option value="LOW">Baixa</option>
-              <option value="MEDIUM">Média</option>
+              <option value="MEDIUM">Media</option>
               <option value="HIGH">Alta</option>
             </select>
           </div>
@@ -122,9 +157,9 @@
           </div>
         </div>
         <div class="field">
-          <label for="task-assignee">Responsável</label>
+          <label for="task-assignee">Responsavel</label>
           <select id="task-assignee" [(ngModel)]="formAssigneeId" name="taskAssignee">
-            <option [ngValue]="null">Sem responsável</option>
+            <option [ngValue]="null">Sem responsavel</option>
             @for (m of members(); track m.userId) {
               <option [ngValue]="m.userId">{{ m.name }}</option>
             }

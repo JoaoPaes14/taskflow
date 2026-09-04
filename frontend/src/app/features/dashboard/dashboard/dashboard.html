@@ -7,29 +7,47 @@
         <h1 class="page-title">Dashboard</h1>
         <p class="page-subtitle">Visão geral dos seus projetos</p>
       </div>
-      <button class="btn-primary" (click)="openCreate()">
-        <span class="btn-icon">+</span>
+      <button class="btn-primary btn-glow" (click)="openCreate()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Novo Projeto
       </button>
     </header>
 
     <section class="stats">
-      <div class="stat-card">
-        <div class="stat-icon total">&#9776;</div>
+      <div class="stat-card" style="animation-delay: 0.05s">
+        <div class="stat-icon total">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+        </div>
         <div>
           <span class="stat-value">{{ totalProjects() }}</span>
           <span class="stat-label">Total</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon active">&#10003;</div>
+      <div class="stat-card" style="animation-delay: 0.1s">
+        <div class="stat-icon active">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
         <div>
           <span class="stat-value">{{ activeProjects() }}</span>
           <span class="stat-label">Ativos</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon archived">&#9632;</div>
+      <div class="stat-card" style="animation-delay: 0.15s">
+        <div class="stat-icon archived">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="21 8 21 21 3 21 3 8"/>
+            <rect x="1" y="3" width="22" height="5"/>
+            <line x1="10" y1="12" x2="14" y2="12"/>
+          </svg>
+        </div>
         <div>
           <span class="stat-value">{{ archivedProjects() }}</span>
           <span class="stat-label">Arquivados</span>
@@ -39,7 +57,9 @@
 
     <section class="controls">
       <div class="search-box">
-        <span class="search-icon">&#9906;</span>
+        <span class="search-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
         <input
           type="text"
           placeholder="Buscar projetos..."
@@ -89,15 +109,24 @@
       </section>
     } @else if (filteredProjects().length === 0) {
       <div class="state empty">
-        <div class="empty-icon">&#128194;</div>
+        <div class="empty-illustration">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.4">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            <line x1="12" y1="11" x2="12" y2="17"/>
+            <line x1="9" y1="14" x2="15" y2="14"/>
+          </svg>
+        </div>
         <h3>Nenhum projeto encontrado</h3>
         <p>Crie seu primeiro projeto para começar a organizar suas tarefas.</p>
-        <button class="btn-primary" (click)="openCreate()">Criar projeto</button>
+        <button class="btn-primary btn-glow" (click)="openCreate()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Criar projeto
+        </button>
       </div>
     } @else {
       <section class="projects-grid">
-        @for (p of filteredProjects(); track p.id) {
-          <div class="project-card">
+        @for (p of filteredProjects(); track p.id; let i = $index) {
+          <div class="project-card" [style.animation-delay]="(i * 0.05) + 's'">
             <div class="project-avatar" [class.deleted]="p.status === 'DELETED'">
               {{ getInitial(p.name) }}
             </div>
@@ -119,14 +148,38 @@
                 @if (p.status !== 'DELETED') {
                   <div class="actions">
                     @if (p.status === 'ACTIVE') {
-                      <button class="icon-btn board" title="Abrir quadro" (click)="openBoard(p)">&#9638;</button>
-                      <button class="icon-btn archive" title="Arquivar" (click)="onArchive(p)">&#128230;</button>
+                      <button class="icon-btn board" title="Abrir quadro" (click)="openBoard(p)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
+                        </svg>
+                      </button>
+                      <button class="icon-btn archive" title="Arquivar" (click)="onArchive(p)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/>
+                        </svg>
+                      </button>
                     } @else {
-                      <button class="icon-btn restore" title="Restaurar" (click)="onRestore(p)">&#10227;</button>
+                      <button class="icon-btn restore" title="Restaurar" (click)="onRestore(p)">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+                        </svg>
+                      </button>
                     }
-                    <button class="icon-btn invite" title="Convidar membro" (click)="openInviteModal(p)">&#128101;</button>
-                    <button class="icon-btn edit" title="Editar" (click)="openEdit(p)">&#9998;</button>
-                    <button class="icon-btn delete" title="Excluir" (click)="onDelete(p)">&#128465;</button>
+                    <button class="icon-btn invite" title="Convidar membro" (click)="openInviteModal(p)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                      </svg>
+                    </button>
+                    <button class="icon-btn edit" title="Editar" (click)="openEdit(p)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button class="icon-btn delete" title="Excluir" (click)="onDelete(p)">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                      </svg>
+                    </button>
                   </div>
                 }
               </div>
