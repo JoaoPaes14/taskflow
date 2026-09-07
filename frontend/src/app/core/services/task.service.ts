@@ -35,6 +35,14 @@ export class TaskService {
     return this.http.delete<void>(`${this.API}/tasks/${taskId}`);
   }
 
+  archiveTask(taskId: number): Observable<void> {
+    return this.http.patch<void>(`${this.API}/tasks/${taskId}/archive`, {});
+  }
+
+  restoreTask(taskId: number): Observable<void> {
+    return this.http.patch<void>(`${this.API}/tasks/${taskId}/restore`, {});
+  }
+
   getComments(taskId: number): Observable<TaskComment[]> {
     return this.http.get<TaskComment[]>(`${this.API}/tasks/${taskId}/comments`);
   }

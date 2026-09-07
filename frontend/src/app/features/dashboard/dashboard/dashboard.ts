@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
+import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -9,7 +10,7 @@ import { Project, ProjectMember, ProjectRequest } from '../../../core/models/pro
 
 @Component({
   selector: 'app-dashboard',
-  imports: [SidebarComponent, FormsModule],
+  imports: [SidebarComponent, FormsModule, ConfirmModalComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -43,6 +44,12 @@ export class Dashboard implements OnInit {
   inviteEmail = '';
   inviteSubmitting = signal(false);
   members = signal<ProjectMember[]>([]);
+
+  confirmOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmDanger = signal(false);
+  confirmAction = signal<(() => void) | null>(null);
 
   statusLabels: Record<string, string> = {
     ACTIVE: 'Ativo',
@@ -164,14 +171,19 @@ export class Dashboard implements OnInit {
   }
 
   onDelete(p: Project): void {
-    if (!confirm(`Tem certeza que deseja excluir o projeto "${p.name}"?`)) return;
-    this.projects.delete(p.id).subscribe({
-      next: () => {
-        this.projectsList.update((list) => list.filter((x) => x.id !== p.id));
-        this.toast.success('Projeto excluído.');
-      },
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir.'),
+    this.confirmTitle.set('Excluir projeto');
+    this.confirmMessage.set(`Tem certeza que deseja excluir o projeto "${p.name}"?`);
+    this.confirmDanger.set(true);
+    this.confirmAction.set(() => {
+      this.projects.delete(p.id).subscribe({
+        next: () => {
+          this.projectsList.update((list) => list.filter((x) => x.id !== p.id));
+          this.toast.success('Projeto excluido.');
+        },
+        error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir.'),
+      });
     });
+    this.confirmOpen.set(true);
   }
 
   onArchive(p: Project): void {
@@ -250,19 +262,23 @@ export class Dashboard implements OnInit {
     if (!isSelf && !this.canManageMembers()) return;
 
     const action = isSelf ? 'Sair do projeto' : 'Remover do projeto';
-    if (!confirm(`${action} "${m.name}"?`)) return;
-
-    this.projects.removeMember(target.id, m.userId).subscribe({
-      next: () => {
-        this.members.update((list) => list.filter((x) => x.userId !== m.userId));
-        this.toast.success(isSelf ? 'Você saiu do projeto.' : `${m.name} foi removido do projeto.`);
-        if (isSelf) {
-          this.closeInviteModal();
-          this.loadProjects();
-        }
-      },
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao remover membro.'),
+    this.confirmTitle.set(action);
+    this.confirmMessage.set(`${action} "${m.name}"?`);
+    this.confirmDanger.set(!isSelf);
+    this.confirmAction.set(() => {
+      this.projects.removeMember(target.id, m.userId).subscribe({
+        next: () => {
+          this.members.update((list) => list.filter((x) => x.userId !== m.userId));
+          this.toast.success(isSelf ? 'Voce saiu do projeto.' : `${m.name} foi removido do projeto.`);
+          if (isSelf) {
+            this.closeInviteModal();
+            this.loadProjects();
+          }
+        },
+        error: (err) => this.toast.error(err.error?.message || 'Erro ao remover membro.'),
+      });
     });
+    this.confirmOpen.set(true);
   }
 
   setSortBy(s: 'recent' | 'name'): void {
@@ -283,6 +299,18 @@ export class Dashboard implements OnInit {
 
   openBoard(p: Project): void {
     this.router.navigate(['/projects', p.id]);
+  }
+
+  confirmClose(): void {
+    this.confirmOpen.set(false);
+    this.confirmAction.set(null);
+  }
+
+  confirmConfirm(): void {
+    const action = this.confirmAction();
+    this.confirmOpen.set(false);
+    this.confirmAction.set(null);
+    if (action) action();
   }
 
   roleLabel(role: string): string {

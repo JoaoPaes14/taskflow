@@ -1,0 +1,89 @@
+<div class="app-layout">
+  <app-sidebar></app-sidebar>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 class="page-title">Painel Admin</h1>
+        <p class="page-subtitle">Gerenciar usuarios e permissoes</p>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <div class="state">
+        <div class="spinner"></div>
+        <p>Carregando usuarios...</p>
+      </div>
+    } @else {
+      <div class="users-header">
+        <span class="users-count">{{ users().length }} usuarios</span>
+      </div>
+
+      <div class="users-table-wrapper">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>Permissao</th>
+              <th>Acao</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (user of users(); track user.userId) {
+              <tr [class.current-user]="isCurrentUser(user.userId)">
+                <td>
+                  <div class="user-cell">
+                    <span class="user-avatar" [style.background]="roleColors[user.role] || '#6366f1'">
+                      {{ getInitial(user.name) }}
+                    </span>
+                    <span class="user-name">
+                      {{ user.name }}
+                      @if (isCurrentUser(user.userId)) {
+                        <span class="you-badge">Voce</span>
+                      }
+                    </span>
+                  </div>
+                </td>
+                <td class="email-cell">{{ user.email }}</td>
+                <td>
+                  <span class="role-badge" [style.--role-color]="roleColors[user.role] || '#6366f1'">
+                    {{ roleLabels[user.role] || user.role }}
+                  </span>
+                </td>
+                <td>
+                  @if (!isCurrentUser(user.userId)) {
+                    <select
+                      class="role-select"
+                      [value]="user.role"
+                      (change)="changeRole(user, $any($event.target).value)"
+                    >
+                      <option value="ADMIN">Administrador</option>
+                      <option value="MANAGER">Gerente</option>
+                      <option value="MEMBER">Membro</option>
+                    </select>
+                  } @else {
+                    <span class="no-action">-</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" class="empty-cell">Nenhum usuario encontrado.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </main>
+</div>
+
+<app-confirm-modal
+  [open]="confirmOpen()"
+  [title]="confirmTitle()"
+  [message]="confirmMessage()"
+  confirmLabel="Confirmar"
+  (confirmed)="confirmConfirm()"
+  (cancelled)="confirmClose()"
+/>

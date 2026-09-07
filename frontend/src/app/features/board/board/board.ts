@@ -3,13 +3,16 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
+import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
+import { LabelService, TaskLabelRequest } from '../../../core/services/label.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Project, ProjectActivity, ProjectMember } from '../../../core/models/project.model';
 import {
   ProjectTask,
   TaskComment,
+  TaskLabel,
   TaskPriority,
   TaskStatus,
 } from '../../../core/models/task.model';
@@ -22,7 +25,7 @@ const COLUMNS: { key: TaskStatus; label: string }[] = [
 
 @Component({
   selector: 'app-board',
-  imports: [SidebarComponent, FormsModule, DatePipe],
+  imports: [SidebarComponent, FormsModule, DatePipe, ConfirmModalComponent],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -31,6 +34,7 @@ export class Board implements OnInit {
   private router = inject(Router);
   private projects = inject(ProjectService);
   private tasks = inject(TaskService);
+  private labels = inject(LabelService);
   private toast = inject(ToastService);
 
   project = signal<Project | null>(null);
@@ -48,6 +52,7 @@ export class Board implements OnInit {
   formPriority: TaskPriority = 'MEDIUM';
   formDueDate = '';
   formAssigneeId: number | null = null;
+  formLabelIds: number[] = [];
 
   comments = signal<TaskComment[]>([]);
   commentsLoading = signal(false);
@@ -58,6 +63,21 @@ export class Board implements OnInit {
   showActivity = signal(false);
   activitiesLoading = signal(false);
 
+  projectLabels = signal<TaskLabel[]>([]);
+  showLabelsModal = signal(false);
+  newLabelName = '';
+  newLabelColor = '#6366f1';
+  labelSubmitting = signal(false);
+
+  filterLabelIds = signal<number[]>([]);
+  showLabelFilter = signal(false);
+
+  confirmOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmDanger = signal(false);
+  confirmAction = signal<(() => void) | null>(null);
+
   columns = COLUMNS;
 
   draggingId: number | null = null;
@@ -66,7 +86,13 @@ export class Board implements OnInit {
   board = computed(() => {
     const byStatus = new Map<TaskStatus, ProjectTask[]>();
     for (const c of COLUMNS) byStatus.set(c.key, []);
+    const activeFilter = this.filterLabelIds();
     for (const t of this.tasksList()) {
+      if (activeFilter.length > 0) {
+        const taskLabelIds = (t.labels ?? []).map((l) => l.id);
+        const hasAll = activeFilter.every((id) => taskLabelIds.includes(id));
+        if (!hasAll) continue;
+      }
       const list = byStatus.get(t.status);
       if (list) list.push(t);
     }
@@ -88,7 +114,7 @@ export class Board implements OnInit {
   private loadAll(projectId: number): void {
     this.loading.set(true);
     let completed = 0;
-    const total = 3;
+    const total = 4;
     const checkDone = () => {
       completed++;
       if (completed >= total) this.loading.set(false);
@@ -117,6 +143,11 @@ export class Board implements OnInit {
       },
       complete: () => checkDone(),
     });
+    this.labels.getLabels(projectId).subscribe({
+      next: (list) => this.projectLabels.set(list),
+      error: () => checkDone(),
+      complete: () => checkDone(),
+    });
   }
 
   getTasks(status: TaskStatus): ProjectTask[] {
@@ -132,6 +163,7 @@ export class Board implements OnInit {
     this.formPriority = 'MEDIUM';
     this.formDueDate = '';
     this.formAssigneeId = null;
+    this.formLabelIds = [];
     this.pendingStatus = status;
     this.comments.set([]);
     this.commentText = '';
@@ -147,6 +179,7 @@ export class Board implements OnInit {
     this.formPriority = task.priority;
     this.formDueDate = task.dueDate || '';
     this.formAssigneeId = task.assigneeId ?? null;
+    this.formLabelIds = (task.labels ?? []).map((l) => l.id);
     this.pendingStatus = task.status;
     this.showModal.set(true);
     this.loadComments(task.id);
@@ -163,7 +196,7 @@ export class Board implements OnInit {
       },
       error: (err) => {
         this.commentsLoading.set(false);
-        this.toast.error(err.error?.message || 'Erro ao carregar comentários.');
+        this.toast.error(err.error?.message || 'Erro ao carregar comentarios.');
       },
     });
   }
@@ -173,7 +206,7 @@ export class Board implements OnInit {
     const taskId = this.editingId();
     if (taskId === null) return;
     if (!this.commentText.trim()) {
-      this.toast.error('Escreva um comentário antes de enviar.');
+      this.toast.error('Escreva um comentario antes de enviar.');
       return;
     }
     this.commentSubmitting.set(true);
@@ -185,7 +218,7 @@ export class Board implements OnInit {
       },
       error: (err) => {
         this.commentSubmitting.set(false);
-        this.toast.error(err.error?.message || 'Erro ao enviar comentário.');
+        this.toast.error(err.error?.message || 'Erro ao enviar comentario.');
       },
     });
   }
@@ -238,6 +271,7 @@ export class Board implements OnInit {
       status: this.pendingStatus,
       dueDate: this.formDueDate || undefined,
       assigneeId: this.formAssigneeId ?? undefined,
+      labelIds: this.formLabelIds.length > 0 ? this.formLabelIds : undefined,
     };
 
     this.submitting.set(true);
@@ -282,14 +316,102 @@ export class Board implements OnInit {
   }
 
   onDelete(task: ProjectTask): void {
-    if (!confirm(`Excluir a tarefa "${task.title}"?`)) return;
-    this.tasks.deleteTask(task.id).subscribe({
-      next: () => {
-        this.tasksList.update((list) => list.filter((t) => t.id !== task.id));
-        this.toast.success('Tarefa excluida.');
-      },
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir.'),
+    this.confirmTitle.set('Excluir tarefa');
+    this.confirmMessage.set(`Excluir a tarefa "${task.title}"?`);
+    this.confirmDanger.set(true);
+    this.confirmAction.set(() => {
+      this.tasks.deleteTask(task.id).subscribe({
+        next: () => {
+          this.tasksList.update((list) => list.filter((t) => t.id !== task.id));
+          this.toast.success('Tarefa excluida.');
+        },
+        error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir.'),
+      });
     });
+    this.confirmOpen.set(true);
+  }
+
+  confirmClose(): void {
+    this.confirmOpen.set(false);
+    this.confirmAction.set(null);
+  }
+
+  confirmConfirm(): void {
+    const action = this.confirmAction();
+    this.confirmOpen.set(false);
+    this.confirmAction.set(null);
+    if (action) action();
+  }
+
+  // --- Labels ---
+  openLabelsModal(): void {
+    this.newLabelName = '';
+    this.newLabelColor = '#6366f1';
+    this.labelSubmitting.set(false);
+    this.showLabelsModal.set(true);
+  }
+
+  closeLabelsModal(): void {
+    this.showLabelsModal.set(false);
+  }
+
+  createLabel(): void {
+    if (this.labelSubmitting()) return;
+    const project = this.project();
+    if (!project) return;
+    if (!this.newLabelName.trim()) {
+      this.toast.error('Nome da label e obrigatorio.');
+      return;
+    }
+    this.labelSubmitting.set(true);
+    this.labels.createLabel(project.id, {
+      name: this.newLabelName.trim(),
+      color: this.newLabelColor,
+    }).subscribe({
+      next: (created) => {
+        this.projectLabels.update((list) => [...list, created]);
+        this.newLabelName = '';
+        this.labelSubmitting.set(false);
+        this.toast.success('Label criada!');
+      },
+      error: (err) => {
+        this.labelSubmitting.set(false);
+        this.toast.error(err.error?.message || 'Erro ao criar label.');
+      },
+    });
+  }
+
+  deleteLabel(label: TaskLabel): void {
+    const project = this.project();
+    if (!project) return;
+    this.labels.deleteLabel(project.id, label.id).subscribe({
+      next: () => {
+        this.projectLabels.update((list) => list.filter((l) => l.id !== label.id));
+        this.filterLabelIds.update((ids) => ids.filter((id) => id !== label.id));
+        this.toast.success('Label removida.');
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao remover label.'),
+    });
+  }
+
+  toggleLabelFilter(labelId: number): void {
+    this.filterLabelIds.update((ids) =>
+      ids.includes(labelId) ? ids.filter((id) => id !== labelId) : [...ids, labelId],
+    );
+  }
+
+  isLabelFiltered(labelId: number): boolean {
+    return this.filterLabelIds().includes(labelId);
+  }
+
+  toggleLabelSelection(labelId: number): void {
+    this.formLabelIds = this.formLabelIds.includes(labelId)
+      ? this.formLabelIds.filter((id) => id !== labelId)
+      : [...this.formLabelIds, labelId];
+  }
+
+  isLabelSelected(labelId: number): boolean {
+    return this.formLabelIds.includes(labelId);
   }
 
   routerBack(): void {

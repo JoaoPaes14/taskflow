@@ -1,6 +1,13 @@
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 
+export interface TaskLabel {
+  id: number;
+  projectId: number;
+  name: string;
+  color: string;
+}
+
 export interface ProjectTask {
   id: number;
   projectId: number;
@@ -10,10 +17,12 @@ export interface ProjectTask {
   priority: TaskPriority;
   dueDate?: string;
   position: number;
+  archived?: boolean;
   assigneeId?: number;
   assigneeName?: string;
   createdById: number;
   createdByName: string;
+  labels?: TaskLabel[];
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +34,7 @@ export interface ProjectTaskRequest {
   priority?: TaskPriority;
   dueDate?: string;
   assigneeId?: number;
+  labelIds?: number[];
 }
 
 export interface UpdateTaskStatusRequest {

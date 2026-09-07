@@ -25,4 +25,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/board/board/board').then((m) => m.Board),
   },
+  {
+    path: 'admin',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/admin/admin/admin').then((m) => m.AdminComponent),
+  },
 ];

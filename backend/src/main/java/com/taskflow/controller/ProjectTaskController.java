@@ -58,4 +58,20 @@ public class ProjectTaskController {
         taskService.deleteTask(taskId, userId);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/tasks/{taskId}/archive")
+    public ResponseEntity<Void> archiveTask(
+            @PathVariable Long taskId,
+            @RequestAttribute("userId") Long userId) {
+        taskService.archiveTask(taskId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/tasks/{taskId}/restore")
+    public ResponseEntity<Void> restoreTask(
+            @PathVariable Long taskId,
+            @RequestAttribute("userId") Long userId) {
+        taskService.restoreTask(taskId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

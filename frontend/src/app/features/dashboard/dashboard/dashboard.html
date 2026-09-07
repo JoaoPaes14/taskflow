@@ -249,3 +249,14 @@
     </div>
   </div>
 }
+
+<app-confirm-modal
+  [open]="confirmOpen()"
+  [title]="confirmTitle()"
+  [message]="confirmMessage()"
+  [danger]="confirmDanger()"
+  confirmLabel="Confirmar"
+  (confirmed)="confirmConfirm()"
+  (cancelled)="confirmClose()"
+/>
+

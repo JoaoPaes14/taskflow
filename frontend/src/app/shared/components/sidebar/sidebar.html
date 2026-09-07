@@ -40,17 +40,33 @@
         <span>Dashboard</span>
       }
     </a>
+    @if (isAdmin) {
+      <a
+        routerLink="/admin"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </span>
+        @if (!collapsed()) {
+          <span>Admin</span>
+        }
+      </a>
+    }
   </nav>
 
   <div class="sidebar-footer">
     <div class="user-area">
-      <div class="avatar">
+      <div class="avatar" [class.admin]="isAdmin">
         {{ (user()?.name || 'U').charAt(0).toUpperCase() }}
       </div>
       @if (!collapsed()) {
         <div class="user-info">
-          <span class="name">{{ user()?.name || 'Usuário' }}</span>
-          <span class="role">{{ (user()?.role || 'MEMBER') | titlecase }}</span>
+          <span class="name">{{ user()?.name || 'Usuario' }}</span>
+          <span class="role" [class.admin-role]="isAdmin">{{ (user()?.role || 'MEMBER') | titlecase }}</span>
           <span class="email">{{ user()?.email }}</span>
         </div>
       }
@@ -72,3 +88,13 @@
     </div>
   </div>
 </aside>
+
+<app-confirm-modal
+  [open]="confirmOpen()"
+  title="Sair da conta"
+  message="Deseja realmente sair da sua conta?"
+  confirmLabel="Sair"
+  [danger]="true"
+  (confirmed)="confirmLogout()"
+  (cancelled)="cancelLogout()"
+/>

@@ -6,18 +6,22 @@ import com.taskflow.dto.UpdateTaskStatusDTO;
 import com.taskflow.entity.Project;
 import com.taskflow.entity.ProjectActivity;
 import com.taskflow.entity.ProjectTask;
+import com.taskflow.entity.TaskLabel;
 import com.taskflow.entity.User;
 import com.taskflow.exception.ResourceNotFoundException;
 import com.taskflow.exception.UnauthorizedException;
 import com.taskflow.repository.ProjectMemberRepository;
 import com.taskflow.repository.ProjectRepository;
 import com.taskflow.repository.ProjectTaskRepository;
+import com.taskflow.repository.TaskLabelRepository;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +33,7 @@ public class ProjectTaskService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final TaskLabelRepository labelRepository;
     private final ProjectActivityService activityService;
 
     public List<ProjectTaskDTO> getTasks(Long projectId, Long userId) {
@@ -48,9 +53,10 @@ public class ProjectTaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         User assignee = resolveAssignee(projectId, request.getAssigneeId());
+        Set<TaskLabel> labels = resolveLabels(projectId, request.getLabelIds());
 
-        int position = (int) taskRepository.countByProjectIdAndStatus(
-                projectId, request.getStatus() != null ? request.getStatus() : ProjectTask.TaskStatus.TODO);
+        int position = (int) taskRepository.countByProjectIdAndStatusAndArchived(
+                projectId, request.getStatus() != null ? request.getStatus() : ProjectTask.TaskStatus.TODO, false);
 
         ProjectTask task = ProjectTask.builder()
                 .title(request.getTitle())
@@ -62,6 +68,7 @@ public class ProjectTaskService {
                 .project(project)
                 .assignee(assignee)
                 .createdBy(creator)
+                .labels(labels)
                 .build();
 
         ProjectTask saved = taskRepository.save(task);
@@ -81,6 +88,9 @@ public class ProjectTaskService {
 
         ProjectTask.TaskStatus previousStatus = task.getStatus();
         User assignee = resolveAssignee(task.getProject().getId(), request.getAssigneeId());
+        Set<TaskLabel> labels = request.getLabelIds() != null
+                ? resolveLabels(task.getProject().getId(), request.getLabelIds())
+                : task.getLabels();
 
         task.setTitle(request.getTitle() != null ? request.getTitle() : task.getTitle());
         task.setDescription(request.getDescription() != null ? request.getDescription() : task.getDescription());
@@ -88,10 +98,11 @@ public class ProjectTaskService {
         task.setPriority(request.getPriority() != null ? request.getPriority() : task.getPriority());
         task.setDueDate(request.getDueDate() != null ? request.getDueDate() : task.getDueDate());
         task.setAssignee(assignee != null ? assignee : task.getAssignee());
+        task.setLabels(labels);
 
         if (request.getStatus() != null && request.getStatus() != previousStatus) {
-            task.setPosition((int) taskRepository.countByProjectIdAndStatus(
-                    task.getProject().getId(), task.getStatus()));
+            task.setPosition((int) taskRepository.countByProjectIdAndStatusAndArchived(
+                    task.getProject().getId(), task.getStatus(), false));
             renormalizeColumn(task.getProject().getId(), previousStatus);
         }
 
@@ -116,7 +127,7 @@ public class ProjectTaskService {
         task.setStatus(request.getStatus());
 
         if (request.getStatus() != previousStatus) {
-            task.setPosition((int) taskRepository.countByProjectIdAndStatus(projectId, request.getStatus()));
+            task.setPosition((int) taskRepository.countByProjectIdAndStatusAndArchived(projectId, request.getStatus(), false));
         } else if (request.getPosition() != null) {
             task.setPosition(request.getPosition());
         }
@@ -135,6 +146,23 @@ public class ProjectTaskService {
                 actor.getName() + " moveu a tarefa \"" + saved.getTitle() + "\" para " + statusLabel);
 
         return ProjectTaskDTO.fromEntity(saved);
+    }
+
+    public void archiveTask(Long taskId, Long userId) {
+        ProjectTask task = getOwnedTask(taskId);
+        requireAccess(task.getProject().getId(), userId);
+        task.setArchived(true);
+        taskRepository.save(task);
+        renormalizeColumn(task.getProject().getId(), task.getStatus());
+    }
+
+    public void restoreTask(Long taskId, Long userId) {
+        ProjectTask task = getOwnedTask(taskId);
+        requireAccess(task.getProject().getId(), userId);
+        task.setArchived(false);
+        task.setPosition((int) taskRepository.countByProjectIdAndStatusAndArchived(
+                task.getProject().getId(), task.getStatus(), false));
+        taskRepository.save(task);
     }
 
     public void deleteTask(Long taskId, Long userId) {
@@ -194,6 +222,22 @@ public class ProjectTaskService {
         }
         return userRepository.findById(assigneeId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    private Set<TaskLabel> resolveLabels(Long projectId, List<Long> labelIds) {
+        if (labelIds == null) {
+            return new HashSet<>();
+        }
+        Set<TaskLabel> labels = new HashSet<>();
+        for (Long labelId : labelIds) {
+            TaskLabel label = labelRepository.findById(labelId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
+            if (!label.getProject().getId().equals(projectId)) {
+                throw new UnauthorizedException("Label does not belong to this project");
+            }
+            labels.add(label);
+        }
+        return labels;
     }
 
     private void requireAccess(Long projectId, Long userId) {

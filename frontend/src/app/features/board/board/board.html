@@ -13,12 +13,50 @@
         </div>
       </div>
       <div class="topbar-right">
+        <button class="btn-labels" (click)="openLabelsModal()" title="Gerenciar labels">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+          Labels
+          @if (projectLabels().length > 0) {
+            <span class="badge-count">{{ projectLabels().length }}</span>
+          }
+        </button>
+        <button class="btn-filter" [class.active]="filterLabelIds().length > 0" (click)="showLabelFilter.set(!showLabelFilter())" title="Filtrar por label">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+          </svg>
+          Filtrar
+          @if (filterLabelIds().length > 0) {
+            <span class="badge-count">{{ filterLabelIds().length }}</span>
+          }
+        </button>
         <button class="btn-activity" (click)="toggleActivity()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           Atividade
         </button>
       </div>
     </header>
+
+    @if (showLabelFilter() && projectLabels().length > 0) {
+      <div class="label-filter-bar">
+        <span class="filter-label-text">Filtrar por label:</span>
+        @for (label of projectLabels(); track label.id) {
+          <button
+            class="label-chip"
+            [class.active]="isLabelFiltered(label.id)"
+            [style.--chip-color]="label.color"
+            (click)="toggleLabelFilter(label.id)"
+          >
+            <span class="chip-dot" [style.background]="label.color"></span>
+            {{ label.name }}
+          </button>
+        }
+        @if (filterLabelIds().length > 0) {
+          <button class="clear-filter" (click)="filterLabelIds.set([])">Limpar</button>
+        }
+      </div>
+    }
 
     @if (loading() && tasksList().length === 0) {
       <div class="state">
@@ -58,6 +96,14 @@
                   (dragend)="onDragEnd()"
                   [style.animation-delay]="(taskIndex * 0.03) + 's'"
                 >
+                  @if (task.labels && task.labels.length > 0) {
+                    <div class="task-labels-row">
+                      @for (label of task.labels; track label.id) {
+                        <span class="task-label-dot" [style.background]="label.color" [title]="label.name"></span>
+                      }
+                    </div>
+                  }
+
                   <div class="task-card-top">
                     <span class="priority-badge" [class]="task.priority.toLowerCase()">
                       {{ priorityLabel(task.priority) }}
@@ -141,11 +187,11 @@
       </div>
       <form (ngSubmit)="submit()">
         <div class="field">
-          <label for="task-title">Título</label>
+          <label for="task-title">Titulo</label>
           <input type="text" id="task-title" [(ngModel)]="formTitle" name="taskTitle" placeholder="Nome da tarefa" required />
         </div>
         <div class="field">
-          <label for="task-desc">Descrição</label>
+          <label for="task-desc">Descricao</label>
           <textarea id="task-desc" rows="3" [(ngModel)]="formDescription" name="taskDesc" placeholder="Detalhes da tarefa (opcional)"></textarea>
         </div>
         <div class="field-row">
@@ -171,6 +217,25 @@
             }
           </select>
         </div>
+        @if (projectLabels().length > 0) {
+          <div class="field">
+            <label>Labels</label>
+            <div class="label-selector">
+              @for (label of projectLabels(); track label.id) {
+                <button
+                  type="button"
+                  class="label-toggle"
+                  [class.selected]="isLabelSelected(label.id)"
+                  [style.--toggle-color]="label.color"
+                  (click)="toggleLabelSelection(label.id)"
+                >
+                  <span class="toggle-dot" [style.background]="label.color"></span>
+                  {{ label.name }}
+                </button>
+              }
+            </div>
+          </div>
+        }
         <div class="modal-actions">
           <button type="button" class="btn-secondary" [disabled]="submitting()" (click)="closeModal()">Cancelar</button>
           <button type="submit" class="btn-primary" [disabled]="submitting()">
@@ -180,9 +245,9 @@
 
         @if (isEditing()) {
           <div class="comments-section">
-            <h3 class="comments-title">Comentários ({{ comments().length }})</h3>
+            <h3 class="comments-title">Comentarios ({{ comments().length }})</h3>
             @if (commentsLoading()) {
-              <p class="comments-empty">Carregando comentários...</p>
+              <p class="comments-empty">Carregando comentarios...</p>
             } @else {
               <div class="comments-list">
                 @for (c of comments(); track c.id) {
@@ -197,7 +262,7 @@
                     </div>
                   </div>
                 } @empty {
-                  <p class="comments-empty">Nenhum comentário ainda. Seja o primeiro!</p>
+                  <p class="comments-empty">Nenhum comentario ainda. Seja o primeiro!</p>
                 }
               </div>
             }
@@ -207,7 +272,7 @@
                 id="comment-content"
                 [(ngModel)]="commentText"
                 name="commentContent"
-                placeholder="Escreva um comentário..."
+                placeholder="Escreva um comentario..."
               ></textarea>
               <button
                 type="button"
@@ -252,3 +317,62 @@
     </div>
   </div>
 }
+
+@if (showLabelsModal()) {
+  <div class="modal-overlay" (click)="closeLabelsModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Gerenciar Labels</h2>
+        <button class="modal-close" (click)="closeLabelsModal()">&times;</button>
+      </div>
+      <p class="labels-subtitle">Crie e gerencie labels para organizar as tarefas deste projeto.</p>
+
+      <form (ngSubmit)="createLabel()" class="label-form">
+        <div class="label-form-row">
+          <input
+            type="text"
+            [(ngModel)]="newLabelName"
+            name="newLabelName"
+            placeholder="Nome da label"
+            maxlength="50"
+            class="label-input"
+          />
+          <input
+            type="color"
+            [(ngModel)]="newLabelColor"
+            name="newLabelColor"
+            class="label-color-picker"
+          />
+          <button type="submit" class="btn-primary btn-sm" [disabled]="labelSubmitting()">
+            {{ labelSubmitting() ? '...' : 'Criar' }}
+          </button>
+        </div>
+      </form>
+
+      <div class="labels-list">
+        @for (label of projectLabels(); track label.id) {
+          <div class="label-item">
+            <span class="label-dot" [style.background]="label.color"></span>
+            <span class="label-name">{{ label.name }}</span>
+            <span class="label-hex">{{ label.color }}</span>
+            <button class="label-delete" title="Remover label" (click)="deleteLabel(label)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        } @empty {
+          <p class="labels-empty">Nenhuma label criada ainda.</p>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<app-confirm-modal
+  [open]="confirmOpen()"
+  [title]="confirmTitle()"
+  [message]="confirmMessage()"
+  [danger]="confirmDanger()"
+  confirmLabel="Confirmar"
+  (confirmed)="confirmConfirm()"
+  (cancelled)="confirmClose()"
+/>

@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -23,12 +25,15 @@ public class ProjectTaskDTO {
     private ProjectTask.TaskPriority priority;
     private LocalDate dueDate;
     private Integer position;
+    private Boolean archived;
 
     private Long assigneeId;
     private String assigneeName;
 
     private Long createdById;
     private String createdByName;
+
+    private List<TaskLabelDTO> labels;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -43,6 +48,7 @@ public class ProjectTaskDTO {
                 .priority(task.getPriority())
                 .dueDate(task.getDueDate())
                 .position(task.getPosition())
+                .archived(task.getArchived())
                 .createdById(task.getCreatedBy() != null ? task.getCreatedBy().getId() : null)
                 .createdByName(task.getCreatedBy() != null ? task.getCreatedBy().getName() : null)
                 .createdAt(task.getCreatedAt())
@@ -52,6 +58,12 @@ public class ProjectTaskDTO {
         if (task.getAssignee() != null) {
             dto.setAssigneeId(task.getAssignee().getId());
             dto.setAssigneeName(task.getAssignee().getName());
+        }
+
+        if (task.getLabels() != null && !task.getLabels().isEmpty()) {
+            dto.setLabels(task.getLabels().stream()
+                    .map(TaskLabelDTO::fromEntity)
+                    .collect(Collectors.toList()));
         }
 
         return dto;
