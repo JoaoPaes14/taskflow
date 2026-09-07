@@ -3,13 +3,15 @@ import { provideRouter } from '@angular/router';
 import { Dashboard } from './dashboard';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { of, throwError } from 'rxjs';
 import { Project } from '../../../core/models/project.model';
 
 describe('Dashboard', () => {
   let component: Dashboard;
   let fixture: ComponentFixture<Dashboard>;
-  let projects: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn>; archive: ReturnType<typeof vi.fn>; restore: ReturnType<typeof vi.fn>; getMembers: ReturnType<typeof vi.fn>; inviteMember: ReturnType<typeof vi.fn> };
+  let projects: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn>; archive: ReturnType<typeof vi.fn>; restore: ReturnType<typeof vi.fn>; getMembers: ReturnType<typeof vi.fn>; inviteMember: ReturnType<typeof vi.fn>; removeMember: ReturnType<typeof vi.fn> };
+  let auth: { currentUser: ReturnType<typeof vi.fn> };
 
   const mockMember = {
     id: 10,
@@ -17,6 +19,7 @@ describe('Dashboard', () => {
     name: 'Maria',
     email: 'maria@x.com',
     role: 'MEMBER' as const,
+    projectRole: 'MEMBER' as const,
     joinedAt: '2026-01-01T00:00:00',
   };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
@@ -54,8 +57,10 @@ describe('Dashboard', () => {
       restore: vi.fn(),
       getMembers: vi.fn(),
       inviteMember: vi.fn(),
+      removeMember: vi.fn(),
     };
     toast = { success: vi.fn(), error: vi.fn() };
+    auth = { currentUser: vi.fn(() => ({ userId: 1 })) };
 
     await TestBed.configureTestingModule({
       imports: [Dashboard],
@@ -63,6 +68,7 @@ describe('Dashboard', () => {
         provideRouter([]),
         { provide: ProjectService, useValue: projects },
         { provide: ToastService, useValue: toast },
+        { provide: AuthService, useValue: auth },
       ],
     }).compileComponents();
 
@@ -305,5 +311,52 @@ describe('Dashboard', () => {
 
     expect(toast.error).toHaveBeenCalledWith('Usuário não encontrado');
     expect(component.inviteSubmitting()).toBe(false);
+  });
+
+  it('should remove a member when owner confirms', () => {
+    component.inviteTarget.set({ ...mockProjects[0], createdById: 1 });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    projects.removeMember.mockReturnValue(of(undefined));
+
+    component.onRemoveMember(mockMember);
+
+    expect(projects.removeMember).toHaveBeenCalledWith(1, 2);
+    expect(component.members()).toEqual([]);
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('should not remove a member when not confirmed', () => {
+    component.inviteTarget.set({ ...mockProjects[0], createdById: 1 });
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    component.onRemoveMember(mockMember);
+
+    expect(projects.removeMember).not.toHaveBeenCalled();
+  });
+
+  it('should not allow a plain member to remove others', () => {
+    component.inviteTarget.set({ ...mockProjects[0], createdById: 99 });
+    component.members.set([mockMember]);
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.onRemoveMember(mockMember);
+
+    expect(projects.removeMember).not.toHaveBeenCalled();
+    expect(component.members()).toEqual([mockMember]);
+  });
+
+  it('should allow a member to leave the project', () => {
+    component.inviteTarget.set({ ...mockProjects[0], createdById: 99 });
+    auth.currentUser.mockReturnValue({ userId: 2 });
+    const leaving = { ...mockMember };
+    component.members.set([leaving]);
+    projects.removeMember.mockReturnValue(of(undefined));
+    projects.getAll.mockReturnValue(of([]));
+
+    component.onRemoveMember(leaving);
+
+    expect(projects.removeMember).toHaveBeenCalledWith(1, 2);
+    expect(component.showInviteModal()).toBe(false);
+    expect(toast.success).toHaveBeenCalled();
   });
 });

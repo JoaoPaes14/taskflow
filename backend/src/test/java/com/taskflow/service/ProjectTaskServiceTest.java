@@ -36,6 +36,8 @@ class ProjectTaskServiceTest {
     private ProjectMemberRepository projectMemberRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private ProjectActivityService activityService;
 
     @InjectMocks
     private ProjectTaskService taskService;
@@ -125,6 +127,7 @@ class ProjectTaskServiceTest {
         UpdateTaskStatusDTO dto = new UpdateTaskStatusDTO(ProjectTask.TaskStatus.DONE, 0);
         when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
         when(taskRepository.save(org.mockito.ArgumentMatchers.any(ProjectTask.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -149,5 +152,45 @@ class ProjectTaskServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> taskService.updateTaskStatus(999L, new UpdateTaskStatusDTO(ProjectTask.TaskStatus.DONE, 0), 1L));
+    }
+
+    @Test
+    void updateTaskStatus_appendsToEndWhenMovingColumn() {
+        UpdateTaskStatusDTO dto = new UpdateTaskStatusDTO(ProjectTask.TaskStatus.DONE, null);
+        when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
+        when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(taskRepository.countByProjectIdAndStatus(10L, ProjectTask.TaskStatus.DONE)).thenReturn(2L);
+        when(taskRepository.save(org.mockito.ArgumentMatchers.any(ProjectTask.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(taskRepository.findByProjectIdAndStatusOrdered(10L, ProjectTask.TaskStatus.TODO))
+                .thenReturn(java.util.List.of());
+        when(taskRepository.findByProjectIdAndStatusOrdered(10L, ProjectTask.TaskStatus.DONE))
+                .thenReturn(java.util.List.of());
+
+        var result = taskService.updateTaskStatus(100L, dto, 1L);
+
+        org.junit.jupiter.api.Assertions.assertEquals(ProjectTask.TaskStatus.DONE, result.getStatus());
+        org.junit.jupiter.api.Assertions.assertEquals(2, result.getPosition());
+    }
+
+    @Test
+    void updateTask_repositionsWhenStatusChanges() {
+        ProjectTaskRequestDTO req = new ProjectTaskRequestDTO(
+                "Tarefa 1", null, ProjectTask.TaskStatus.DONE,
+                ProjectTask.TaskPriority.MEDIUM, null, null);
+        when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
+        when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(taskRepository.countByProjectIdAndStatus(10L, ProjectTask.TaskStatus.DONE)).thenReturn(5L);
+        when(taskRepository.save(org.mockito.ArgumentMatchers.any(ProjectTask.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(taskRepository.findByProjectIdAndStatusOrdered(10L, ProjectTask.TaskStatus.TODO))
+                .thenReturn(java.util.List.of());
+
+        var result = taskService.updateTask(100L, req, 1L);
+
+        org.junit.jupiter.api.Assertions.assertEquals(ProjectTask.TaskStatus.DONE, result.getStatus());
+        org.junit.jupiter.api.Assertions.assertEquals(5, result.getPosition());
     }
 }

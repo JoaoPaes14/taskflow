@@ -32,6 +32,8 @@ class ProjectServiceTest {
     private ProjectMemberRepository projectMemberRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private ProjectActivityService activityService;
 
     @InjectMocks
     private ProjectService projectService;
@@ -114,6 +116,7 @@ class ProjectServiceTest {
                 .password("x").role(Role.MEMBER).build();
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
         when(userRepository.findByEmail("maria@taskflow.com")).thenReturn(Optional.of(invitee));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
         when(projectMemberRepository.existsByProjectIdAndUserId(10L, 2L)).thenReturn(false);
 
         ProjectMember saved = ProjectMember.builder()
@@ -174,5 +177,47 @@ class ProjectServiceTest {
         when(projectMemberRepository.findByProjectId(10L)).thenReturn(java.util.List.of());
 
         assertDoesNotThrow(() -> projectService.getMembers(10L, 2L));
+    }
+
+    @Test
+    void removeMember_ownerCanRemoveMember() {
+        User invitee = User.builder()
+                .id(2L).name("Maria").email("maria@taskflow.com")
+                .password("x").role(Role.MEMBER).build();
+        ProjectMember membership = ProjectMember.builder().id(99L).project(project).user(invitee).build();
+
+        when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(10L, 2L)).thenReturn(Optional.of(membership));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+
+        assertDoesNotThrow(() -> projectService.removeMember(10L, 2L, 1L));
+    }
+
+    @Test
+    void removeMember_memberCanLeave() {
+        User leaving = User.builder()
+                .id(5L).name("Ana").email("ana@taskflow.com")
+                .password("x").role(Role.MEMBER).build();
+        ProjectMember membership = ProjectMember.builder().id(50L).project(project).user(leaving).build();
+
+        when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(10L, 5L)).thenReturn(Optional.of(membership));
+        when(userRepository.findById(5L)).thenReturn(Optional.of(leaving));
+
+        assertDoesNotThrow(() -> projectService.removeMember(10L, 5L, 5L));
+    }
+
+    @Test
+    void removeMember_memberCannotRemoveOthers() {
+        when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
+
+        assertThrows(UnauthorizedException.class, () -> projectService.removeMember(10L, 2L, 5L));
+    }
+
+    @Test
+    void removeMember_ownerCannotLeave() {
+        when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
+
+        assertThrows(IllegalArgumentException.class, () -> projectService.removeMember(10L, 1L, 1L));
     }
 }
