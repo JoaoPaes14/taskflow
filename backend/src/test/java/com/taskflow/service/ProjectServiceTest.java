@@ -34,6 +34,8 @@ class ProjectServiceTest {
     private UserRepository userRepository;
     @Mock
     private ProjectActivityService activityService;
+    @Mock
+    private ProjectAccessService accessService;
 
     @InjectMocks
     private ProjectService projectService;
@@ -63,16 +65,6 @@ class ProjectServiceTest {
     @Test
     void getProjectById_allowsMember() {
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
-        when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
-
-        assertDoesNotThrow(() -> projectService.getProjectById(10L, 1L));
-    }
-
-    @Test
-    void getProjectById_allowsOwner() {
-        when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
-        when(projectRepository.isUserMember(10L, 1L)).thenReturn(false);
-        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
 
         assertDoesNotThrow(() -> projectService.getProjectById(10L, 1L));
     }
@@ -80,8 +72,8 @@ class ProjectServiceTest {
     @Test
     void getProjectById_deniesNonMember() {
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
-        when(projectRepository.isUserMember(10L, 999L)).thenReturn(false);
-        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        org.mockito.Mockito.doThrow(new UnauthorizedException("You don't have permission to access this project"))
+                .when(accessService).requireMember(10L, 999L);
 
         assertThrows(UnauthorizedException.class, () -> projectService.getProjectById(10L, 999L));
     }
@@ -165,15 +157,14 @@ class ProjectServiceTest {
 
     @Test
     void getMembers_deniesNonMember() {
-        when(projectRepository.isUserMember(10L, 999L)).thenReturn(false);
-        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        org.mockito.Mockito.doThrow(new UnauthorizedException("You don't have permission to access this project"))
+                .when(accessService).requireMember(10L, 999L);
 
         assertThrows(UnauthorizedException.class, () -> projectService.getMembers(10L, 999L));
     }
 
     @Test
     void getMembers_allowsMember() {
-        when(projectRepository.isUserMember(10L, 2L)).thenReturn(true);
         when(projectMemberRepository.findByProjectId(10L)).thenReturn(java.util.List.of());
 
         assertDoesNotThrow(() -> projectService.getMembers(10L, 2L));

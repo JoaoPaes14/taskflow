@@ -87,18 +87,35 @@ export class Board implements OnInit {
 
   private loadAll(projectId: number): void {
     this.loading.set(true);
+    let completed = 0;
+    const total = 3;
+    const checkDone = () => {
+      completed++;
+      if (completed >= total) this.loading.set(false);
+    };
     this.projects.getById(projectId).subscribe({
       next: (p) => this.project.set(p),
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao carregar projeto.'),
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Erro ao carregar projeto.');
+        checkDone();
+      },
+      complete: () => checkDone(),
     });
     this.projects.getMembers(projectId).subscribe({
       next: (m) => this.members.set(m),
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao carregar membros.'),
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Erro ao carregar membros.');
+        checkDone();
+      },
+      complete: () => checkDone(),
     });
     this.tasks.getTasks(projectId).subscribe({
       next: (list) => this.tasksList.set(list),
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao carregar tarefas.'),
-      complete: () => this.loading.set(false),
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Erro ao carregar tarefas.');
+        checkDone();
+      },
+      complete: () => checkDone(),
     });
   }
 

@@ -19,13 +19,18 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    private SecretKey cachedKey;
+
     private SecretKey getSigningKey() {
-        try {
-            byte[] keyBytes = Decoders.BASE64.decode(secret);
-            return Keys.hmacShaKeyFor(keyBytes);
-        } catch (Exception e) {
-            return Keys.hmacShaKeyFor(secret.getBytes());
+        if (cachedKey == null) {
+            try {
+                byte[] keyBytes = Decoders.BASE64.decode(secret);
+                cachedKey = Keys.hmacShaKeyFor(keyBytes);
+            } catch (Exception e) {
+                cachedKey = Keys.hmacShaKeyFor(secret.getBytes());
+            }
         }
+        return cachedKey;
     }
 
     public String generateToken(Long userId, String email, String role) {

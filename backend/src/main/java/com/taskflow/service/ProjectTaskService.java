@@ -82,8 +82,8 @@ public class ProjectTaskService {
         ProjectTask.TaskStatus previousStatus = task.getStatus();
         User assignee = resolveAssignee(task.getProject().getId(), request.getAssigneeId());
 
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
+        task.setTitle(request.getTitle() != null ? request.getTitle() : task.getTitle());
+        task.setDescription(request.getDescription() != null ? request.getDescription() : task.getDescription());
         task.setStatus(request.getStatus() != null ? request.getStatus() : task.getStatus());
         task.setPriority(request.getPriority() != null ? request.getPriority() : task.getPriority());
         task.setDueDate(request.getDueDate());
@@ -146,6 +146,7 @@ public class ProjectTaskService {
         String title = task.getTitle();
 
         taskRepository.delete(task);
+        taskRepository.flush();
         renormalizeColumn(projectId, status);
 
         activityService.record(project, actor, ProjectActivity.ActionType.TASK_DELETED,
@@ -154,12 +155,16 @@ public class ProjectTaskService {
 
     private void renormalizeColumn(Long projectId, ProjectTask.TaskStatus status) {
         List<ProjectTask> tasks = taskRepository.findByProjectIdAndStatusOrdered(projectId, status);
+        boolean changed = false;
         for (int i = 0; i < tasks.size(); i++) {
             ProjectTask task = tasks.get(i);
             if (task.getPosition() == null || task.getPosition() != i) {
                 task.setPosition(i);
-                taskRepository.save(task);
+                changed = true;
             }
+        }
+        if (changed) {
+            taskRepository.saveAll(tasks);
         }
     }
 

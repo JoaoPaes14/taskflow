@@ -70,9 +70,10 @@ export class AuthService {
         this.currentUser.set({
           userId: Number(payload.sub),
           email: payload.email,
-          name: '',
-          role: 'MEMBER',
+          name: payload.name || '',
+          role: payload.role || 'MEMBER',
         });
+        this.refreshProfile();
       } catch {
         localStorage.removeItem(this.TOKEN_KEY);
       }

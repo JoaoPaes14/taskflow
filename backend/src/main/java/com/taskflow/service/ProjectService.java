@@ -30,6 +30,7 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final ProjectActivityService activityService;
+    private final ProjectAccessService accessService;
 
     public ProjectResponseDTO createProject(ProjectRequestDTO request, Long userId) {
         User user = userRepository.findById(userId)
@@ -61,9 +62,7 @@ public class ProjectService {
         Project project = projectRepository.findActiveById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
-        if (!isMemberOrOwner(id, userId)) {
-            throw new UnauthorizedException("You don't have permission to access this project");
-        }
+        accessService.requireMember(id, userId);
 
         return ProjectResponseDTO.fromEntity(project);
     }
@@ -88,13 +87,8 @@ public class ProjectService {
         return ProjectResponseDTO.fromEntity(updated);
     }
 
-    private boolean isMemberOrOwner(Long projectId, Long userId) {
-        if (projectRepository.isUserMember(projectId, userId)) {
-            return true;
-        }
-        return projectRepository.findById(projectId)
-                .map(p -> p.getCreatedBy().getId().equals(userId))
-                .orElse(false);
+    private void requireAccess(Long projectId, Long userId) {
+        accessService.requireMember(projectId, userId);
     }
 
     public List<ProjectMemberDTO> getMembers(Long projectId, Long userId) {
@@ -158,12 +152,6 @@ public class ProjectService {
 
         projectMemberRepository.delete(membership);
         activityService.record(project, actor, ProjectActivity.ActionType.MEMBER_REMOVED, message);
-    }
-
-    private void requireAccess(Long projectId, Long userId) {
-        if (!isMemberOrOwner(projectId, userId)) {
-            throw new UnauthorizedException("You don't have permission to access this project");
-        }
     }
 
     public void deleteProject(Long id, Long userId) {

@@ -1,5 +1,5 @@
 @for (t of list(); track t.id) {
-  <div class="toast {{ t.type }}" (click)="dismiss(t.id)">
+  <div class="toast" [class]="t.type" (click)="dismiss(t.id)">
     <span class="toast-icon">
       @switch (t.type) {
         @case ('success') {

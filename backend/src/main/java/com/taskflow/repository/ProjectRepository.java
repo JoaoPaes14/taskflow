@@ -18,9 +18,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByMember(@Param("user") User user);
 
    
-    List<Project> findByCreatedByAndStatusNot(User createdBy, Project.ProjectStatus status);
-
-   
     @Query("SELECT p FROM Project p WHERE p.id = :id AND p.status != 'DELETED'")
     Optional<Project> findActiveById(@Param("id") Long id);
 

@@ -82,6 +82,10 @@ describe('AuthService', () => {
     expect(service.isLoggedIn()).toBe(true);
     expect(service.currentUser()?.userId).toBe(5);
     expect(service.currentUser()?.email).toBe('x@x.com');
+
+    // refreshProfile is called, flush the HTTP request
+    const req = httpMock.expectOne('/api/auth/me');
+    req.flush({ userId: 5, name: 'Test', email: 'x@x.com', role: 'MEMBER' });
   });
 
   it('should clear token and user on logout', () => {

@@ -84,6 +84,7 @@ export class Dashboard implements OnInit {
       next: (list) => this.projectsList.set(list),
       error: (err) => {
         this.toast.error(err.error?.message || 'Erro ao carregar projetos.');
+        this.loading.set(false);
       },
       complete: () => this.loading.set(false),
     });
