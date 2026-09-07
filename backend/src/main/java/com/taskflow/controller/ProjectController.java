@@ -1,6 +1,7 @@
 package com.taskflow.controller;
 
 import com.taskflow.dto.InviteMemberRequestDTO;
+import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.ProjectMemberDTO;
 import com.taskflow.dto.ProjectRequestDTO;
 import com.taskflow.dto.ProjectResponseDTO;
@@ -37,8 +38,14 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectResponseDTO>> getUserProjects(
-            @RequestAttribute("userId") Long userId) {
+    public ResponseEntity<?> getUserProjects(
+            @RequestAttribute("userId") Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponseDTO<ProjectResponseDTO> result = projectService.getProjectsByUserPaged(userId, page, size);
+            return ResponseEntity.ok(result);
+        }
         List<ProjectResponseDTO> projects = projectService.getProjectsByUser(userId);
         return ResponseEntity.ok(projects);
     }

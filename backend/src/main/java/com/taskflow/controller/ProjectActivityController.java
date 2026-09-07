@@ -1,5 +1,6 @@
 package com.taskflow.controller;
 
+import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.ProjectActivityDTO;
 import com.taskflow.service.ProjectActivityService;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +17,16 @@ public class ProjectActivityController {
     private final ProjectActivityService activityService;
 
     @GetMapping
-    public ResponseEntity<List<ProjectActivityDTO>> getActivities(
+    public ResponseEntity<?> getActivities(
             @PathVariable Long projectId,
-            @RequestAttribute("userId") Long userId) {
-        return ResponseEntity.ok(activityService.getActivities(projectId, userId));
+            @RequestAttribute("userId") Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponseDTO<ProjectActivityDTO> result = activityService.getActivitiesPaged(projectId, userId, page, size);
+            return ResponseEntity.ok(result);
+        }
+        List<ProjectActivityDTO> activities = activityService.getActivities(projectId, userId);
+        return ResponseEntity.ok(activities);
     }
 }

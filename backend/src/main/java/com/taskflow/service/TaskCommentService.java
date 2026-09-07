@@ -1,5 +1,6 @@
 package com.taskflow.service;
 
+import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.TaskCommentDTO;
 import com.taskflow.dto.TaskCommentRequestDTO;
 import com.taskflow.entity.ProjectActivity;
@@ -11,6 +12,9 @@ import com.taskflow.repository.ProjectTaskRepository;
 import com.taskflow.repository.TaskCommentRepository;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +38,18 @@ public class TaskCommentService {
         return commentRepository.findByTaskIdOrderByCreatedAtAsc(taskId).stream()
                 .map(TaskCommentDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponseDTO<TaskCommentDTO> getCommentsPaged(Long taskId, Long userId, int page, int size) {
+        ProjectTask task = getTask(taskId);
+        accessService.requireMember(task.getProject().getId(), userId);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<TaskComment> result = commentRepository.findByTaskIdOrderByCreatedAtAscPaged(taskId, pageable);
+        List<TaskCommentDTO> content = result.getContent().stream()
+                .map(TaskCommentDTO::fromEntity)
+                .collect(Collectors.toList());
+        return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
     @Transactional

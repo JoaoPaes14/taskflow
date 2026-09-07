@@ -1,5 +1,6 @@
 package com.taskflow.controller;
 
+import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.TaskCommentDTO;
 import com.taskflow.dto.TaskCommentRequestDTO;
 import com.taskflow.service.TaskCommentService;
@@ -19,10 +20,17 @@ public class TaskCommentController {
     private final TaskCommentService commentService;
 
     @GetMapping("/tasks/{taskId}/comments")
-    public ResponseEntity<List<TaskCommentDTO>> getComments(
+    public ResponseEntity<?> getComments(
             @PathVariable Long taskId,
-            @RequestAttribute("userId") Long userId) {
-        return ResponseEntity.ok(commentService.getComments(taskId, userId));
+            @RequestAttribute("userId") Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponseDTO<TaskCommentDTO> result = commentService.getCommentsPaged(taskId, userId, page, size);
+            return ResponseEntity.ok(result);
+        }
+        List<TaskCommentDTO> comments = commentService.getComments(taskId, userId);
+        return ResponseEntity.ok(comments);
     }
 
     @PostMapping("/tasks/{taskId}/comments")

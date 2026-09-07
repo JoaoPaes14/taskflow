@@ -1,5 +1,6 @@
 package com.taskflow.controller;
 
+import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.ProjectTaskDTO;
 import com.taskflow.dto.ProjectTaskRequestDTO;
 import com.taskflow.dto.UpdateTaskStatusDTO;
@@ -20,10 +21,17 @@ public class ProjectTaskController {
     private final ProjectTaskService taskService;
 
     @GetMapping("/projects/{projectId}/tasks")
-    public ResponseEntity<List<ProjectTaskDTO>> getTasks(
+    public ResponseEntity<?> getTasks(
             @PathVariable Long projectId,
-            @RequestAttribute("userId") Long userId) {
-        return ResponseEntity.ok(taskService.getTasks(projectId, userId));
+            @RequestAttribute("userId") Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponseDTO<ProjectTaskDTO> result = taskService.getTasksPaged(projectId, userId, page, size);
+            return ResponseEntity.ok(result);
+        }
+        List<ProjectTaskDTO> tasks = taskService.getTasks(projectId, userId);
+        return ResponseEntity.ok(tasks);
     }
 
     @PostMapping("/projects/{projectId}/tasks")

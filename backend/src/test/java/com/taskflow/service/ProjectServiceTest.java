@@ -108,7 +108,6 @@ class ProjectServiceTest {
                 .password("x").role(Role.MEMBER).build();
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
         when(userRepository.findByEmail("maria@taskflow.com")).thenReturn(Optional.of(invitee));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
         when(projectMemberRepository.existsByProjectIdAndUserId(10L, 2L)).thenReturn(false);
 
         ProjectMember saved = ProjectMember.builder()
@@ -179,7 +178,6 @@ class ProjectServiceTest {
 
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
         when(projectMemberRepository.findByProjectIdAndUserId(10L, 2L)).thenReturn(Optional.of(membership));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
 
         assertDoesNotThrow(() -> projectService.removeMember(10L, 2L, 1L));
     }
@@ -200,7 +198,11 @@ class ProjectServiceTest {
 
     @Test
     void removeMember_memberCannotRemoveOthers() {
+        User member = User.builder()
+                .id(5L).name("Ana").email("ana@taskflow.com")
+                .password("x").role(Role.MEMBER).build();
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
+        when(userRepository.findById(5L)).thenReturn(Optional.of(member));
 
         assertThrows(UnauthorizedException.class, () -> projectService.removeMember(10L, 2L, 5L));
     }

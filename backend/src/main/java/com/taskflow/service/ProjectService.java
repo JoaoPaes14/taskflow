@@ -1,6 +1,7 @@
 package com.taskflow.service;
 
 import com.taskflow.dto.InviteMemberRequestDTO;
+import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.ProjectMemberDTO;
 import com.taskflow.dto.ProjectRequestDTO;
 import com.taskflow.dto.ProjectResponseDTO;
@@ -15,6 +16,9 @@ import com.taskflow.repository.ProjectMemberRepository;
 import com.taskflow.repository.ProjectRepository;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,10 +75,21 @@ public class ProjectService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        List<Project> projects = projectRepository.findByMember(user);
-        return projects.stream()
+        return projectRepository.findByMember(user).stream()
                 .map(ProjectResponseDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    public PageResponseDTO<ProjectResponseDTO> getProjectsByUserPaged(Long userId, int page, int size) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Project> result = projectRepository.findByMemberPaged(user, pageable);
+        List<ProjectResponseDTO> content = result.getContent().stream()
+                .map(ProjectResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+        return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
     public ProjectResponseDTO updateProject(Long id, ProjectRequestDTO request, Long userId) {

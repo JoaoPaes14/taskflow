@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,6 +42,8 @@ class ProjectTaskServiceTest {
     private TaskLabelRepository labelRepository;
     @Mock
     private ProjectActivityService activityService;
+    @Mock
+    private ProjectAccessService accessService;
 
     @InjectMocks
     private ProjectTaskService taskService;
@@ -78,8 +81,8 @@ class ProjectTaskServiceTest {
 
     @Test
     void getTasks_deniesNonMember() {
-        when(projectRepository.isUserMember(10L, 999L)).thenReturn(false);
-        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        lenient().doThrow(new UnauthorizedException("no access"))
+                .when(accessService).requireMember(10L, 999L);
 
         assertThrows(UnauthorizedException.class, () -> taskService.getTasks(10L, 999L));
     }
@@ -104,8 +107,8 @@ class ProjectTaskServiceTest {
     @Test
     void createTask_deniesNonMember() {
         ProjectTaskRequestDTO req = new ProjectTaskRequestDTO("Nova", null, null, null, null, null, null);
-        when(projectRepository.isUserMember(10L, 999L)).thenReturn(false);
-        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        lenient().doThrow(new UnauthorizedException("no access"))
+                .when(accessService).requireMember(10L, 999L);
 
         assertThrows(UnauthorizedException.class, () -> taskService.createTask(10L, req, 999L));
     }
@@ -142,9 +145,9 @@ class ProjectTaskServiceTest {
     @Test
     void updateTaskStatus_requiresTaskAccess() {
         UpdateTaskStatusDTO dto = new UpdateTaskStatusDTO(ProjectTask.TaskStatus.DONE, 0);
-        when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
-        when(projectRepository.isUserMember(10L, 999L)).thenReturn(false);
-        when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
+        lenient().when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
+        lenient().doThrow(new UnauthorizedException("no access"))
+                .when(accessService).requireMember(10L, 999L);
 
         assertThrows(UnauthorizedException.class, () -> taskService.updateTaskStatus(100L, dto, 999L));
     }

@@ -1,5 +1,6 @@
 package com.taskflow.service;
 
+import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.ProjectTaskDTO;
 import com.taskflow.dto.ProjectTaskRequestDTO;
 import com.taskflow.dto.UpdateTaskStatusDTO;
@@ -16,6 +17,9 @@ import com.taskflow.repository.ProjectTaskRepository;
 import com.taskflow.repository.TaskLabelRepository;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +45,16 @@ public class ProjectTaskService {
         return taskRepository.findByProjectIdOrdered(projectId).stream()
                 .map(ProjectTaskDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    public PageResponseDTO<ProjectTaskDTO> getTasksPaged(Long projectId, Long userId, int page, int size) {
+        requireAccess(projectId, userId);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProjectTask> result = taskRepository.findByProjectIdOrderedPaged(projectId, pageable);
+        List<ProjectTaskDTO> content = result.getContent().stream()
+                .map(ProjectTaskDTO::fromEntity)
+                .collect(Collectors.toList());
+        return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
     public ProjectTaskDTO createTask(Long projectId, ProjectTaskRequestDTO request, Long userId) {
