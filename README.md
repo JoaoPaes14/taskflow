@@ -99,6 +99,10 @@ jwt.expiration=86400000   # 24h em milissegundos
 | GET    | `/api/projects/{id}`     | Busca projeto por ID               |
 | PUT    | `/api/projects/{id}`     | Atualiza projeto (dono)            |
 | DELETE | `/api/projects/{id}`     | Exclui (soft delete)               |
+| GET    | `/api/projects/{id}/members` | Lista membros do projeto       |
+| POST   | `/api/projects/{id}/members` | Convida membro por email       |
+| DELETE | `/api/projects/{id}/members/{userId}` | Remove membro / sair do projeto |
+| GET    | `/api/projects/{id}/activities` | Histórico de atividades       |
 
 Exemplo de corpo para criar/atualizar:
 
@@ -108,6 +112,36 @@ Exemplo de corpo para criar/atualizar:
   "description": "Descrição opcional"
 }
 ```
+
+---
+
+## 📝 API de Tarefas e Comentários
+
+| Método | Rota                     | Descrição                          |
+|--------|--------------------------|------------------------------------|
+| GET    | `/api/projects/{id}/tasks` | Lista tarefas do projeto         |
+| POST   | `/api/projects/{id}/tasks` | Cria uma tarefa                  |
+| PUT    | `/api/tasks/{id}`        | Atualiza tarefa                    |
+| PATCH  | `/api/tasks/{id}/status` | Muda status/posição (normaliza coluna) |
+| DELETE | `/api/tasks/{id}`        | Exclui tarefa e reordena coluna    |
+| GET    | `/api/tasks/{id}/comments` | Lista comentários da tarefa     |
+| POST   | `/api/tasks/{id}/comments` | Adiciona comentário à tarefa    |
+
+Exemplo de corpo para criar uma tarefa:
+
+```json
+{
+  "title": "Implementar login",
+  "description": "Criar tela de autenticação",
+  "status": "TODO",
+  "priority": "HIGH",
+  "dueDate": "2026-09-30",
+  "assigneeId": 2
+}
+```
+
+As operações de projeto/tarefa geram um **feed de atividades** consultável em
+`GET /api/projects/{id}/activities`.
 
 ---
 

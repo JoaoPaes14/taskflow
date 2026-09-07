@@ -81,8 +81,6 @@ spring-boot-devtools.properties
 **/node_modules/
 **/dist/
 **/.angular/
-**/package-lock.json
-**/yarn.lock
 
 # Backup files
 *.bak
