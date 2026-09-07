@@ -11,6 +11,7 @@ import com.taskflow.exception.UnauthorizedException;
 import com.taskflow.repository.ProjectMemberRepository;
 import com.taskflow.repository.ProjectRepository;
 import com.taskflow.repository.ProjectTaskRepository;
+import com.taskflow.repository.TaskLabelRepository;
 import com.taskflow.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ class ProjectTaskServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
+    private TaskLabelRepository labelRepository;
+    @Mock
     private ProjectActivityService activityService;
 
     @InjectMocks
@@ -49,7 +52,7 @@ class ProjectTaskServiceTest {
     @BeforeEach
     void setUp() {
         owner = User.builder()
-                .id(1L).name("João").email("j@j.com").password("x").role(Role.MEMBER).build();
+                .id(1L).name("Joao").email("j@j.com").password("x").role(Role.MEMBER).build();
 
         project = Project.builder()
                 .id(10L).name("Site").status(Project.ProjectStatus.ACTIVE).createdBy(owner).build();
@@ -85,11 +88,11 @@ class ProjectTaskServiceTest {
     void createTask_allowsMember() {
         ProjectTaskRequestDTO req = new ProjectTaskRequestDTO(
                 "Nova", null, ProjectTask.TaskStatus.TODO,
-                ProjectTask.TaskPriority.HIGH, null, null);
+                ProjectTask.TaskPriority.HIGH, null, null, null);
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
         when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(taskRepository.countByProjectIdAndStatus(10L, ProjectTask.TaskStatus.TODO)).thenReturn(2L);
+        when(taskRepository.countByProjectIdAndStatusAndArchived(10L, ProjectTask.TaskStatus.TODO, false)).thenReturn(2L);
         when(taskRepository.save(org.mockito.ArgumentMatchers.any(ProjectTask.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -100,7 +103,7 @@ class ProjectTaskServiceTest {
 
     @Test
     void createTask_deniesNonMember() {
-        ProjectTaskRequestDTO req = new ProjectTaskRequestDTO("Nova", null, null, null, null, null);
+        ProjectTaskRequestDTO req = new ProjectTaskRequestDTO("Nova", null, null, null, null, null, null);
         when(projectRepository.isUserMember(10L, 999L)).thenReturn(false);
         when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
 
@@ -113,7 +116,7 @@ class ProjectTaskServiceTest {
                 .id(2L).name("Maria").email("m@m.com").password("x").role(Role.MEMBER).build();
         ProjectTaskRequestDTO req = new ProjectTaskRequestDTO(
                 "Nova", null, ProjectTask.TaskStatus.TODO,
-                ProjectTask.TaskPriority.MEDIUM, null, 2L);
+                ProjectTask.TaskPriority.MEDIUM, null, 2L, null);
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
         when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
@@ -160,7 +163,7 @@ class ProjectTaskServiceTest {
         when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(taskRepository.countByProjectIdAndStatus(10L, ProjectTask.TaskStatus.DONE)).thenReturn(2L);
+        when(taskRepository.countByProjectIdAndStatusAndArchived(10L, ProjectTask.TaskStatus.DONE, false)).thenReturn(2L);
         when(taskRepository.save(org.mockito.ArgumentMatchers.any(ProjectTask.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(taskRepository.findByProjectIdAndStatusOrdered(10L, ProjectTask.TaskStatus.TODO))
@@ -178,11 +181,11 @@ class ProjectTaskServiceTest {
     void updateTask_repositionsWhenStatusChanges() {
         ProjectTaskRequestDTO req = new ProjectTaskRequestDTO(
                 "Tarefa 1", null, ProjectTask.TaskStatus.DONE,
-                ProjectTask.TaskPriority.MEDIUM, null, null);
+                ProjectTask.TaskPriority.MEDIUM, null, null, null);
         when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(taskRepository.countByProjectIdAndStatus(10L, ProjectTask.TaskStatus.DONE)).thenReturn(5L);
+        when(taskRepository.countByProjectIdAndStatusAndArchived(10L, ProjectTask.TaskStatus.DONE, false)).thenReturn(5L);
         when(taskRepository.save(org.mockito.ArgumentMatchers.any(ProjectTask.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
         when(taskRepository.findByProjectIdAndStatusOrdered(10L, ProjectTask.TaskStatus.TODO))
