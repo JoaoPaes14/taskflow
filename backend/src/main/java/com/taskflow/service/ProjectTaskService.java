@@ -4,6 +4,7 @@ import com.taskflow.dto.ProjectTaskDTO;
 import com.taskflow.dto.ProjectTaskRequestDTO;
 import com.taskflow.dto.UpdateTaskStatusDTO;
 import com.taskflow.entity.Project;
+import com.taskflow.entity.ProjectActivity;
 import com.taskflow.entity.ProjectTask;
 import com.taskflow.entity.User;
 import com.taskflow.exception.ResourceNotFoundException;
@@ -28,6 +29,7 @@ public class ProjectTaskService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final ProjectActivityService activityService;
 
     public List<ProjectTaskDTO> getTasks(Long projectId, Long userId) {
         requireAccess(projectId, userId);
@@ -62,13 +64,22 @@ public class ProjectTaskService {
                 .createdBy(creator)
                 .build();
 
-        return ProjectTaskDTO.fromEntity(taskRepository.save(task));
+        ProjectTask saved = taskRepository.save(task);
+
+        activityService.record(project, creator, ProjectActivity.ActionType.TASK_CREATED,
+                creator.getName() + " criou a tarefa \"" + saved.getTitle() + "\"");
+
+        return ProjectTaskDTO.fromEntity(saved);
     }
 
     public ProjectTaskDTO updateTask(Long taskId, ProjectTaskRequestDTO request, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
 
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        ProjectTask.TaskStatus previousStatus = task.getStatus();
         User assignee = resolveAssignee(task.getProject().getId(), request.getAssigneeId());
 
         task.setTitle(request.getTitle());
@@ -78,25 +89,86 @@ public class ProjectTaskService {
         task.setDueDate(request.getDueDate());
         task.setAssignee(assignee);
 
-        return ProjectTaskDTO.fromEntity(taskRepository.save(task));
+        if (request.getStatus() != null && request.getStatus() != previousStatus) {
+            task.setPosition((int) taskRepository.countByProjectIdAndStatus(
+                    task.getProject().getId(), task.getStatus()));
+            renormalizeColumn(task.getProject().getId(), previousStatus);
+        }
+
+        ProjectTask saved = taskRepository.save(task);
+
+        activityService.record(task.getProject(), actor, ProjectActivity.ActionType.TASK_UPDATED,
+                actor.getName() + " atualizou a tarefa \"" + saved.getTitle() + "\"");
+
+        return ProjectTaskDTO.fromEntity(saved);
     }
 
     public ProjectTaskDTO updateTaskStatus(Long taskId, UpdateTaskStatusDTO request, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
 
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        ProjectTask.TaskStatus previousStatus = task.getStatus();
+        Long projectId = task.getProject().getId();
+
         task.setStatus(request.getStatus());
-        if (request.getPosition() != null) {
+
+        if (request.getStatus() != previousStatus) {
+            task.setPosition((int) taskRepository.countByProjectIdAndStatus(projectId, request.getStatus()));
+        } else if (request.getPosition() != null) {
             task.setPosition(request.getPosition());
         }
 
-        return ProjectTaskDTO.fromEntity(taskRepository.save(task));
+        ProjectTask saved = taskRepository.save(task);
+
+        renormalizeColumn(projectId, previousStatus);
+        renormalizeColumn(projectId, saved.getStatus());
+
+        String statusLabel = statusLabel(saved.getStatus());
+        activityService.record(saved.getProject(), actor, ProjectActivity.ActionType.TASK_MOVED,
+                actor.getName() + " moveu a tarefa \"" + saved.getTitle() + "\" para " + statusLabel);
+
+        return ProjectTaskDTO.fromEntity(saved);
     }
 
     public void deleteTask(Long taskId, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
+
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        ProjectTask.TaskStatus status = task.getStatus();
+        Project project = task.getProject();
+        Long projectId = project.getId();
+        String title = task.getTitle();
+
         taskRepository.delete(task);
+        renormalizeColumn(projectId, status);
+
+        activityService.record(project, actor, ProjectActivity.ActionType.TASK_DELETED,
+                actor.getName() + " excluiu a tarefa \"" + title + "\"");
+    }
+
+    private void renormalizeColumn(Long projectId, ProjectTask.TaskStatus status) {
+        List<ProjectTask> tasks = taskRepository.findByProjectIdAndStatusOrdered(projectId, status);
+        for (int i = 0; i < tasks.size(); i++) {
+            ProjectTask task = tasks.get(i);
+            if (task.getPosition() == null || task.getPosition() != i) {
+                task.setPosition(i);
+                taskRepository.save(task);
+            }
+        }
+    }
+
+    private String statusLabel(ProjectTask.TaskStatus status) {
+        return switch (status) {
+            case TODO -> "A fazer";
+            case IN_PROGRESS -> "Em progresso";
+            case DONE -> "Concluído";
+        };
     }
 
     private ProjectTask getOwnedTask(Long taskId) {

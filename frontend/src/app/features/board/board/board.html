@@ -12,6 +12,12 @@
           <p class="page-subtitle">Quadro de tarefas</p>
         </div>
       </div>
+      <div class="topbar-right">
+        <button class="btn-activity" (click)="toggleActivity()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Atividade
+        </button>
+      </div>
     </header>
 
     @if (loading() && tasksList().length === 0) {
@@ -171,7 +177,78 @@
             {{ submitting() ? 'Salvando...' : (isEditing() ? 'Salvar' : 'Criar') }}
           </button>
         </div>
+
+        @if (isEditing()) {
+          <div class="comments-section">
+            <h3 class="comments-title">Comentários ({{ comments().length }})</h3>
+            @if (commentsLoading()) {
+              <p class="comments-empty">Carregando comentários...</p>
+            } @else {
+              <div class="comments-list">
+                @for (c of comments(); track c.id) {
+                  <div class="comment-item">
+                    <span class="comment-avatar">{{ getInitial(c.authorName) }}</span>
+                    <div class="comment-body">
+                      <div class="comment-head">
+                        <strong>{{ c.authorName }}</strong>
+                        <span class="comment-date">{{ c.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                      </div>
+                      <p>{{ c.content }}</p>
+                    </div>
+                  </div>
+                } @empty {
+                  <p class="comments-empty">Nenhum comentário ainda. Seja o primeiro!</p>
+                }
+              </div>
+            }
+            <div class="comment-form">
+              <textarea
+                rows="2"
+                id="comment-content"
+                [(ngModel)]="commentText"
+                name="commentContent"
+                placeholder="Escreva um comentário..."
+              ></textarea>
+              <button
+                type="button"
+                class="btn-primary btn-sm"
+                [disabled]="commentSubmitting() || !commentText.trim()"
+                (click)="submitComment()"
+              >
+                {{ commentSubmitting() ? 'Enviando...' : 'Comentar' }}
+              </button>
+            </div>
+          </div>
+        }
       </form>
+    </div>
+  </div>
+}
+
+@if (showActivity()) {
+  <div class="modal-overlay" (click)="closeActivity()">
+    <div class="modal modal-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Atividade do projeto</h2>
+        <button class="modal-close" (click)="closeActivity()">&times;</button>
+      </div>
+      <div class="activity-list">
+        @if (activitiesLoading()) {
+          <p class="activity-empty">Carregando atividades...</p>
+        } @else {
+          @for (a of activities(); track a.id) {
+            <div class="activity-item">
+              <span class="activity-avatar">{{ getInitial(a.actorName) }}</span>
+              <div class="activity-body">
+                <p class="activity-message">{{ a.message }}</p>
+                <span class="activity-date">{{ a.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            </div>
+          } @empty {
+            <p class="activity-empty">Nenhuma atividade registrada ainda.</p>
+          }
+        }
+      </div>
     </div>
   </div>
 }

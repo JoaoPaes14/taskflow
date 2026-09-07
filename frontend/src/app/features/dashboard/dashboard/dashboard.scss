@@ -753,6 +753,27 @@
   color: var(--text-muted, #6b7280);
 }
 
+.member-remove {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger, #ef4444);
+  }
+}
+
 .members-empty {
   font-size: 0.85rem;
   color: var(--text-muted, #6b7280);

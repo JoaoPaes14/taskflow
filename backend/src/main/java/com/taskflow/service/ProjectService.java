@@ -5,6 +5,7 @@ import com.taskflow.dto.ProjectMemberDTO;
 import com.taskflow.dto.ProjectRequestDTO;
 import com.taskflow.dto.ProjectResponseDTO;
 import com.taskflow.entity.Project;
+import com.taskflow.entity.ProjectActivity;
 import com.taskflow.entity.ProjectMember;
 import com.taskflow.entity.ProjectRole;
 import com.taskflow.entity.User;
@@ -28,6 +29,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final ProjectActivityService activityService;
 
     public ProjectResponseDTO createProject(ProjectRequestDTO request, Long userId) {
         User user = userRepository.findById(userId)
@@ -48,6 +50,9 @@ public class ProjectService {
                 .role(ProjectRole.OWNER)
                 .build();
         projectMemberRepository.save(member);
+
+        activityService.record(saved, user, ProjectActivity.ActionType.PROJECT_CREATED,
+                user.getName() + " criou o projeto \"" + saved.getName() + "\"");
 
         return ProjectResponseDTO.fromEntity(saved);
     }
@@ -118,7 +123,41 @@ public class ProjectService {
                 .user(member)
                 .build());
 
+        User owner = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        activityService.record(project, owner, ProjectActivity.ActionType.MEMBER_INVITED,
+                owner.getName() + " convidou " + member.getName() + " para o projeto");
+
         return ProjectMemberDTO.fromEntity(saved);
+    }
+
+    public void removeMember(Long projectId, Long targetUserId, Long userId) {
+        Project project = projectRepository.findActiveById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        boolean isOwner = project.getCreatedBy().getId().equals(userId);
+        boolean removingSelf = userId.equals(targetUserId);
+
+        if (!isOwner && !removingSelf) {
+            throw new UnauthorizedException("Only the project owner can remove members");
+        }
+        if (removingSelf && project.getCreatedBy().getId().equals(targetUserId)) {
+            throw new IllegalArgumentException("The project owner cannot leave the project");
+        }
+
+        ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(projectId, targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of the project"));
+
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        String message = removingSelf
+                ? actor.getName() + " saiu do projeto"
+                : actor.getName() + " removeu " + membership.getUser().getName() + " do projeto";
+
+        projectMemberRepository.delete(membership);
+        activityService.record(project, actor, ProjectActivity.ActionType.MEMBER_REMOVED, message);
     }
 
     private void requireAccess(Long projectId, Long userId) {
@@ -136,13 +175,27 @@ public class ProjectService {
     public ProjectResponseDTO archiveProject(Long id, Long userId) {
         Project project = requireOwner(id, userId);
         project.setStatus(Project.ProjectStatus.ARCHIVED);
-        return ProjectResponseDTO.fromEntity(projectRepository.save(project));
+        ProjectResponseDTO dto = ProjectResponseDTO.fromEntity(projectRepository.save(project));
+
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        activityService.record(project, actor, ProjectActivity.ActionType.PROJECT_ARCHIVED,
+                actor.getName() + " arquivou o projeto \"" + project.getName() + "\"");
+
+        return dto;
     }
 
     public ProjectResponseDTO restoreProject(Long id, Long userId) {
         Project project = requireOwner(id, userId);
         project.setStatus(Project.ProjectStatus.ACTIVE);
-        return ProjectResponseDTO.fromEntity(projectRepository.save(project));
+        ProjectResponseDTO dto = ProjectResponseDTO.fromEntity(projectRepository.save(project));
+
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        activityService.record(project, actor, ProjectActivity.ActionType.PROJECT_RESTORED,
+                actor.getName() + " restaurou o projeto \"" + project.getName() + "\"");
+
+        return dto;
     }
 
     private Project requireOwner(Long id, Long userId) {

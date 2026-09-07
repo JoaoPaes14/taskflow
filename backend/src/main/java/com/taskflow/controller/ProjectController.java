@@ -84,6 +84,15 @@ public class ProjectController {
         return ResponseEntity.status(HttpStatus.CREATED).body(member);
     }
 
+    @DeleteMapping("/{id}/members/{memberUserId}")
+    public ResponseEntity<Void> removeMember(
+            @PathVariable Long id,
+            @PathVariable Long memberUserId,
+            @RequestAttribute("userId") Long userId) {
+        projectService.removeMember(id, memberUserId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProject(
             @PathVariable Long id,

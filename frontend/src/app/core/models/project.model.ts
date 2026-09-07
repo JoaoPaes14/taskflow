@@ -23,3 +23,25 @@ export interface ProjectMember {
   projectRole: 'OWNER' | 'MEMBER';
   joinedAt: string;
 }
+
+export type ActivityAction =
+  | 'PROJECT_CREATED'
+  | 'PROJECT_ARCHIVED'
+  | 'PROJECT_RESTORED'
+  | 'MEMBER_INVITED'
+  | 'MEMBER_REMOVED'
+  | 'TASK_CREATED'
+  | 'TASK_UPDATED'
+  | 'TASK_MOVED'
+  | 'TASK_DELETED'
+  | 'COMMENT_ADDED';
+
+export interface ProjectActivity {
+  id: number;
+  projectId: number;
+  actorId: number;
+  actorName: string;
+  action: ActivityAction;
+  message: string;
+  createdAt: string;
+}

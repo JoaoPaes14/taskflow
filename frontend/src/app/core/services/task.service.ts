@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ProjectTask, ProjectTaskRequest, UpdateTaskStatusRequest } from '../models/task.model';
+import {
+  ProjectTask,
+  ProjectTaskRequest,
+  TaskComment,
+  TaskCommentRequest,
+  UpdateTaskStatusRequest,
+} from '../models/task.model';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -27,5 +33,13 @@ export class TaskService {
 
   deleteTask(taskId: number): Observable<void> {
     return this.http.delete<void>(`${this.API}/tasks/${taskId}`);
+  }
+
+  getComments(taskId: number): Observable<TaskComment[]> {
+    return this.http.get<TaskComment[]>(`${this.API}/tasks/${taskId}/comments`);
+  }
+
+  addComment(taskId: number, data: TaskCommentRequest): Observable<TaskComment> {
+    return this.http.post<TaskComment>(`${this.API}/tasks/${taskId}/comments`, data);
   }
 }

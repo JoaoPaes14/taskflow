@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Project, ProjectMember, ProjectRequest } from '../models/project.model';
+import {
+  Project,
+  ProjectActivity,
+  ProjectMember,
+  ProjectRequest,
+} from '../models/project.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -39,6 +44,14 @@ export class ProjectService {
 
   inviteMember(id: number, email: string): Observable<ProjectMember> {
     return this.http.post<ProjectMember>(`${this.API}/${id}/members`, { email });
+  }
+
+  removeMember(id: number, userId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/${id}/members/${userId}`);
+  }
+
+  getActivities(id: number): Observable<ProjectActivity[]> {
+    return this.http.get<ProjectActivity[]>(`${this.API}/${id}/activities`);
   }
 
   delete(id: number): Observable<void> {

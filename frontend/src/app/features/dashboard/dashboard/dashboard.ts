@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { ProjectService } from '../../../core/services/project.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Project, ProjectMember, ProjectRequest } from '../../../core/models/project.model';
 
 @Component({
@@ -16,6 +17,12 @@ export class Dashboard implements OnInit {
   private projects = inject(ProjectService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private auth = inject(AuthService);
+
+  currentUserId = computed(() => this.auth.currentUser()?.userId ?? null);
+  canManageMembers = computed(
+    () => this.inviteTarget()?.createdById === this.currentUserId(),
+  );
 
   projectsList = signal<Project[]>([]);
   loading = signal(false);
@@ -230,6 +237,30 @@ export class Dashboard implements OnInit {
         this.inviteSubmitting.set(false);
         this.toast.error(err.error?.message || 'Erro ao convidar usuário.');
       },
+    });
+  }
+
+  onRemoveMember(m: ProjectMember): void {
+    const target = this.inviteTarget();
+    if (!target) return;
+    if (m.projectRole === 'OWNER') return;
+
+    const isSelf = m.userId === this.currentUserId();
+    if (!isSelf && !this.canManageMembers()) return;
+
+    const action = isSelf ? 'Sair do projeto' : 'Remover do projeto';
+    if (!confirm(`${action} "${m.name}"?`)) return;
+
+    this.projects.removeMember(target.id, m.userId).subscribe({
+      next: () => {
+        this.members.update((list) => list.filter((x) => x.userId !== m.userId));
+        this.toast.success(isSelf ? 'Você saiu do projeto.' : `${m.name} foi removido do projeto.`);
+        if (isSelf) {
+          this.closeInviteModal();
+          this.loadProjects();
+        }
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao remover membro.'),
     });
   }
 

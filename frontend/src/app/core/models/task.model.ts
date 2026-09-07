@@ -31,3 +31,16 @@ export interface UpdateTaskStatusRequest {
   status: TaskStatus;
   position?: number;
 }
+
+export interface TaskComment {
+  id: number;
+  taskId: number;
+  authorId: number;
+  authorName: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface TaskCommentRequest {
+  content: string;
+}

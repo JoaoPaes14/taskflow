@@ -1,12 +1,18 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { Project, ProjectMember } from '../../../core/models/project.model';
-import { ProjectTask, TaskPriority, TaskStatus } from '../../../core/models/task.model';
+import { Project, ProjectActivity, ProjectMember } from '../../../core/models/project.model';
+import {
+  ProjectTask,
+  TaskComment,
+  TaskPriority,
+  TaskStatus,
+} from '../../../core/models/task.model';
 
 const COLUMNS: { key: TaskStatus; label: string }[] = [
   { key: 'TODO', label: 'A fazer' },
@@ -16,7 +22,7 @@ const COLUMNS: { key: TaskStatus; label: string }[] = [
 
 @Component({
   selector: 'app-board',
-  imports: [SidebarComponent, FormsModule],
+  imports: [SidebarComponent, FormsModule, DatePipe],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -42,6 +48,15 @@ export class Board implements OnInit {
   formPriority: TaskPriority = 'MEDIUM';
   formDueDate = '';
   formAssigneeId: number | null = null;
+
+  comments = signal<TaskComment[]>([]);
+  commentsLoading = signal(false);
+  commentSubmitting = signal(false);
+  commentText = '';
+
+  activities = signal<ProjectActivity[]>([]);
+  showActivity = signal(false);
+  activitiesLoading = signal(false);
 
   columns = COLUMNS;
 
@@ -101,6 +116,8 @@ export class Board implements OnInit {
     this.formDueDate = '';
     this.formAssigneeId = null;
     this.pendingStatus = status;
+    this.comments.set([]);
+    this.commentText = '';
     this.showModal.set(true);
   }
 
@@ -115,10 +132,77 @@ export class Board implements OnInit {
     this.formAssigneeId = task.assigneeId ?? null;
     this.pendingStatus = task.status;
     this.showModal.set(true);
+    this.loadComments(task.id);
+  }
+
+  loadComments(taskId: number): void {
+    this.commentsLoading.set(true);
+    this.comments.set([]);
+    this.commentText = '';
+    this.tasks.getComments(taskId).subscribe({
+      next: (list) => {
+        this.comments.set(list);
+        this.commentsLoading.set(false);
+      },
+      error: (err) => {
+        this.commentsLoading.set(false);
+        this.toast.error(err.error?.message || 'Erro ao carregar comentários.');
+      },
+    });
+  }
+
+  submitComment(): void {
+    if (this.commentSubmitting()) return;
+    const taskId = this.editingId();
+    if (taskId === null) return;
+    if (!this.commentText.trim()) {
+      this.toast.error('Escreva um comentário antes de enviar.');
+      return;
+    }
+    this.commentSubmitting.set(true);
+    this.tasks.addComment(taskId, { content: this.commentText.trim() }).subscribe({
+      next: (comment) => {
+        this.comments.update((list) => [...list, comment]);
+        this.commentText = '';
+        this.commentSubmitting.set(false);
+      },
+      error: (err) => {
+        this.commentSubmitting.set(false);
+        this.toast.error(err.error?.message || 'Erro ao enviar comentário.');
+      },
+    });
+  }
+
+  toggleActivity(): void {
+    const project = this.project();
+    if (!project) return;
+    if (this.showActivity()) {
+      this.showActivity.set(false);
+      return;
+    }
+    this.activitiesLoading.set(true);
+    this.projects.getActivities(project.id).subscribe({
+      next: (list) => {
+        this.activities.set(list);
+        this.activitiesLoading.set(false);
+        this.showActivity.set(true);
+      },
+      error: (err) => {
+        this.activitiesLoading.set(false);
+        this.toast.error(err.error?.message || 'Erro ao carregar atividades.');
+      },
+    });
+  }
+
+  closeActivity(): void {
+    this.showActivity.set(false);
   }
 
   closeModal(): void {
     this.showModal.set(false);
+    this.comments.set([]);
+    this.commentText = '';
+    this.editingId.set(null);
   }
 
   submit(): void {
