@@ -1,7 +1,8 @@
 package com.taskflow.service;
 
 import com.taskflow.config.JwtUtil;
-import com.taskflow.dto.AuthRequestDTO;
+import com.taskflow.dto.LoginRequestDTO;
+import com.taskflow.dto.RegisterRequestDTO;
 import com.taskflow.dto.AuthResponseDTO;
 import com.taskflow.entity.Role;
 import com.taskflow.entity.User;
@@ -23,7 +24,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public AuthResponseDTO register(AuthRequestDTO request) {
+    public AuthResponseDTO register(RegisterRequestDTO request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyInUseException("Email already in use");
         }
@@ -48,7 +49,7 @@ public class AuthService {
                 .build();
     }
 
-    public AuthResponseDTO login(AuthRequestDTO request) {
+    public AuthResponseDTO login(LoginRequestDTO request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid credentials"));
 

@@ -1,6 +1,7 @@
 package com.taskflow.controller;
 
-import com.taskflow.dto.AuthRequestDTO;
+import com.taskflow.dto.LoginRequestDTO;
+import com.taskflow.dto.RegisterRequestDTO;
 import com.taskflow.dto.AuthResponseDTO;
 import com.taskflow.service.AuthService;
 import jakarta.validation.Valid;
@@ -18,14 +19,14 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDTO> register(
-            @Valid @RequestBody AuthRequestDTO request) {
+            @Valid @RequestBody RegisterRequestDTO request) {
         AuthResponseDTO response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(
-            @Valid @RequestBody AuthRequestDTO request) {
+            @Valid @RequestBody LoginRequestDTO request) {
         AuthResponseDTO response = authService.login(request);
         return ResponseEntity.ok(response);
     }
