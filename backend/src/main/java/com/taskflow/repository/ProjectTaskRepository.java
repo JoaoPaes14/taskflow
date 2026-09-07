@@ -11,10 +11,10 @@ import java.util.List;
 @Repository
 public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> {
 
-    @Query("SELECT t FROM ProjectTask t WHERE t.project.id = :projectId ORDER BY t.position ASC")
+    @Query("SELECT DISTINCT t FROM ProjectTask t JOIN FETCH t.createdBy LEFT JOIN FETCH t.assignee JOIN FETCH t.project WHERE t.project.id = :projectId ORDER BY t.position ASC")
     List<ProjectTask> findByProjectIdOrdered(@Param("projectId") Long projectId);
 
-    @Query("SELECT t FROM ProjectTask t WHERE t.project.id = :projectId AND t.status = :status ORDER BY t.position ASC")
+    @Query("SELECT DISTINCT t FROM ProjectTask t JOIN FETCH t.createdBy LEFT JOIN FETCH t.assignee JOIN FETCH t.project WHERE t.project.id = :projectId AND t.status = :status ORDER BY t.position ASC")
     List<ProjectTask> findByProjectIdAndStatusOrdered(
             @Param("projectId") Long projectId,
             @Param("status") ProjectTask.TaskStatus status);

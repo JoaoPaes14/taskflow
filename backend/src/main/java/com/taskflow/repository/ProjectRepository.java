@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
   
-    @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm WHERE pm.user = :user AND p.status != 'DELETED'")
+    @Query("SELECT DISTINCT p FROM Project p JOIN p.members pm LEFT JOIN FETCH p.createdBy WHERE pm.user = :user AND p.status != 'DELETED'")
     List<Project> findByMember(@Param("user") User user);
 
    

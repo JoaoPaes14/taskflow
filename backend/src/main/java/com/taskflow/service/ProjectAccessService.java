@@ -13,7 +13,7 @@ public class ProjectAccessService {
 
     public boolean isMember(Long projectId, Long userId) {
         return projectRepository.isUserMember(projectId, userId)
-                || projectRepository.findById(projectId)
+                || projectRepository.findActiveById(projectId)
                         .map(p -> p.getCreatedBy().getId().equals(userId))
                         .orElse(false);
     }

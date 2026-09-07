@@ -86,8 +86,8 @@ public class ProjectTaskService {
         task.setDescription(request.getDescription() != null ? request.getDescription() : task.getDescription());
         task.setStatus(request.getStatus() != null ? request.getStatus() : task.getStatus());
         task.setPriority(request.getPriority() != null ? request.getPriority() : task.getPriority());
-        task.setDueDate(request.getDueDate());
-        task.setAssignee(assignee);
+        task.setDueDate(request.getDueDate() != null ? request.getDueDate() : task.getDueDate());
+        task.setAssignee(assignee != null ? assignee : task.getAssignee());
 
         if (request.getStatus() != null && request.getStatus() != previousStatus) {
             task.setPosition((int) taskRepository.countByProjectIdAndStatus(
@@ -123,8 +123,12 @@ public class ProjectTaskService {
 
         ProjectTask saved = taskRepository.save(task);
 
-        renormalizeColumn(projectId, previousStatus);
-        renormalizeColumn(projectId, saved.getStatus());
+        if (previousStatus != saved.getStatus()) {
+            renormalizeColumn(projectId, previousStatus);
+            renormalizeColumn(projectId, saved.getStatus());
+        } else if (request.getPosition() != null) {
+            renormalizeColumn(projectId, saved.getStatus());
+        }
 
         String statusLabel = statusLabel(saved.getStatus());
         activityService.record(saved.getProject(), actor, ProjectActivity.ActionType.TASK_MOVED,
@@ -194,7 +198,7 @@ public class ProjectTaskService {
 
     private void requireAccess(Long projectId, Long userId) {
         if (!projectRepository.isUserMember(projectId, userId)
-                && !projectRepository.findById(projectId)
+                && !projectRepository.findActiveById(projectId)
                         .map(p -> p.getCreatedBy().getId().equals(userId))
                         .orElse(false)) {
             throw new UnauthorizedException("You don't have permission to access this project");

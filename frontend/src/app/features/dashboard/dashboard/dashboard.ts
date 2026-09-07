@@ -274,7 +274,7 @@ export class Dashboard implements OnInit {
   }
 
   getInitial(name: string): string {
-    return name.charAt(0).toUpperCase();
+    return (name || '?').charAt(0).toUpperCase();
   }
 
   statusLabel(status: string): string {

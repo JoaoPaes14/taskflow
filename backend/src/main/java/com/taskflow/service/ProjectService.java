@@ -99,7 +99,7 @@ public class ProjectService {
     }
 
     public ProjectMemberDTO inviteMember(Long projectId, InviteMemberRequestDTO request, Long userId) {
-        requireOwner(projectId, userId);
+        Project project = requireOwner(projectId, userId);
 
         User member = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -109,19 +109,13 @@ public class ProjectService {
             throw new IllegalArgumentException("This user is already a member of the project");
         }
 
-        Project project = projectRepository.findActiveById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
-
         ProjectMember saved = projectMemberRepository.save(ProjectMember.builder()
                 .project(project)
                 .user(member)
                 .build());
 
-        User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        activityService.record(project, owner, ProjectActivity.ActionType.MEMBER_INVITED,
-                owner.getName() + " convidou " + member.getName() + " para o projeto");
+        activityService.record(project, project.getCreatedBy(), ProjectActivity.ActionType.MEMBER_INVITED,
+                project.getCreatedBy().getName() + " convidou " + member.getName() + " para o projeto");
 
         return ProjectMemberDTO.fromEntity(saved);
     }
@@ -129,6 +123,10 @@ public class ProjectService {
     public void removeMember(Long projectId, Long targetUserId, Long userId) {
         Project project = projectRepository.findActiveById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        User actor = project.getCreatedBy().getId().equals(userId)
+                ? project.getCreatedBy()
+                : userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         boolean isOwner = project.getCreatedBy().getId().equals(userId);
         boolean removingSelf = userId.equals(targetUserId);
@@ -142,9 +140,6 @@ public class ProjectService {
 
         ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(projectId, targetUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("This user is not a member of the project"));
-
-        User actor = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         String message = removingSelf
                 ? actor.getName() + " saiu do projeto"
@@ -165,10 +160,8 @@ public class ProjectService {
         project.setStatus(Project.ProjectStatus.ARCHIVED);
         ProjectResponseDTO dto = ProjectResponseDTO.fromEntity(projectRepository.save(project));
 
-        User actor = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        activityService.record(project, actor, ProjectActivity.ActionType.PROJECT_ARCHIVED,
-                actor.getName() + " arquivou o projeto \"" + project.getName() + "\"");
+        activityService.record(project, project.getCreatedBy(), ProjectActivity.ActionType.PROJECT_ARCHIVED,
+                project.getCreatedBy().getName() + " arquivou o projeto \"" + project.getName() + "\"");
 
         return dto;
     }
@@ -178,10 +171,8 @@ public class ProjectService {
         project.setStatus(Project.ProjectStatus.ACTIVE);
         ProjectResponseDTO dto = ProjectResponseDTO.fromEntity(projectRepository.save(project));
 
-        User actor = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        activityService.record(project, actor, ProjectActivity.ActionType.PROJECT_RESTORED,
-                actor.getName() + " restaurou o projeto \"" + project.getName() + "\"");
+        activityService.record(project, project.getCreatedBy(), ProjectActivity.ActionType.PROJECT_RESTORED,
+                project.getCreatedBy().getName() + " restaurou o projeto \"" + project.getName() + "\"");
 
         return dto;
     }
