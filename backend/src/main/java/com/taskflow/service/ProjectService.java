@@ -35,6 +35,7 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final ProjectActivityService activityService;
     private final ProjectAccessService accessService;
+    private final NotificationService notificationService;
 
     public ProjectResponseDTO createProject(ProjectRequestDTO request, Long userId) {
         User user = userRepository.findById(userId)
@@ -131,6 +132,13 @@ public class ProjectService {
 
         activityService.record(project, project.getCreatedBy(), ProjectActivity.ActionType.MEMBER_INVITED,
                 project.getCreatedBy().getName() + " convidou " + member.getName() + " para o projeto");
+
+        User actor = userRepository.findById(userId).orElse(null);
+        if (actor != null) {
+            notificationService.send(member.getId(), "PROJECT_INVITE",
+                    actor.getName() + " te convidou para o projeto \"" + project.getName() + "\"",
+                    project.getId(), "PROJECT");
+        }
 
         return ProjectMemberDTO.fromEntity(saved);
     }

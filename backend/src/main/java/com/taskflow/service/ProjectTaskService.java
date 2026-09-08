@@ -39,6 +39,7 @@ public class ProjectTaskService {
     private final UserRepository userRepository;
     private final TaskLabelRepository labelRepository;
     private final ProjectActivityService activityService;
+    private final NotificationService notificationService;
 
     public List<ProjectTaskDTO> getTasks(Long projectId, Long userId) {
         requireAccess(projectId, userId);
@@ -90,6 +91,12 @@ public class ProjectTaskService {
         activityService.record(project, creator, ProjectActivity.ActionType.TASK_CREATED,
                 creator.getName() + " criou a tarefa \"" + saved.getTitle() + "\"");
 
+        if (assignee != null && !assignee.getId().equals(creator.getId())) {
+            notificationService.send(assignee.getId(), "TASK_ASSIGNED",
+                    creator.getName() + " atribuiu a tarefa \"" + saved.getTitle() + "\" a voce",
+                    saved.getId(), "TASK");
+        }
+
         return ProjectTaskDTO.fromEntity(saved);
     }
 
@@ -124,6 +131,13 @@ public class ProjectTaskService {
 
         activityService.record(task.getProject(), actor, ProjectActivity.ActionType.TASK_UPDATED,
                 actor.getName() + " atualizou a tarefa \"" + saved.getTitle() + "\"");
+
+        if (assignee != null && !assignee.getId().equals(userId)
+                && (task.getAssignee() == null || !task.getAssignee().getId().equals(assignee.getId()))) {
+            notificationService.send(assignee.getId(), "TASK_ASSIGNED",
+                    actor.getName() + " atribuiu a tarefa \"" + saved.getTitle() + "\" a voce",
+                    saved.getId(), "TASK");
+        }
 
         return ProjectTaskDTO.fromEntity(saved);
     }

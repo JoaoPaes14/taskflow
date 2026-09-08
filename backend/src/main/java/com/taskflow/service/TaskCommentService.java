@@ -30,6 +30,7 @@ public class TaskCommentService {
     private final UserRepository userRepository;
     private final ProjectAccessService accessService;
     private final ProjectActivityService activityService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<TaskCommentDTO> getComments(Long taskId, Long userId) {
@@ -68,6 +69,18 @@ public class TaskCommentService {
 
         activityService.record(task.getProject(), author, ProjectActivity.ActionType.COMMENT_ADDED,
                 author.getName() + " comentou na tarefa \"" + task.getTitle() + "\"");
+
+        if (task.getAssignee() != null && !task.getAssignee().getId().equals(author.getId())) {
+            notificationService.send(task.getAssignee().getId(), "COMMENT_ADDED",
+                    author.getName() + " comentou na tarefa \"" + task.getTitle() + "\"",
+                    task.getId(), "TASK");
+        }
+        if (task.getCreatedBy() != null && !task.getCreatedBy().getId().equals(author.getId())
+                && (task.getAssignee() == null || !task.getCreatedBy().getId().equals(task.getAssignee().getId()))) {
+            notificationService.send(task.getCreatedBy().getId(), "COMMENT_ADDED",
+                    author.getName() + " comentou na tarefa \"" + task.getTitle() + "\"",
+                    task.getId(), "TASK");
+        }
 
         return TaskCommentDTO.fromEntity(comment);
     }
