@@ -70,6 +70,13 @@ export class TaskService {
     });
   }
 
+  export(projectId: number, format: string): Observable<Blob> {
+    return this.http.get(`${this.API}/projects/${projectId}/export`, {
+      params: { format },
+      responseType: 'blob',
+    });
+  }
+
   getComments(taskId: number): Observable<TaskComment[]> {
     return this.http.get<TaskComment[]>(`${this.API}/tasks/${taskId}/comments`);
   }

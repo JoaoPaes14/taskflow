@@ -98,4 +98,36 @@ public class ProjectTaskController {
         taskService.restoreTask(taskId, userId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/projects/{projectId}/export")
+    public ResponseEntity<?> exportProject(
+            @PathVariable Long projectId,
+            @RequestParam(defaultValue = "json") String format,
+            @RequestAttribute("userId") Long userId) {
+        List<ProjectTaskDTO> tasks = taskService.getTasks(projectId, userId);
+        if ("csv".equalsIgnoreCase(format)) {
+            StringBuilder csv = new StringBuilder();
+            csv.append("ID,Titulo,Descricao,Status,Prioridade,Data Limite,Responsavel,Criado em\n");
+            for (ProjectTaskDTO t : tasks) {
+                csv.append(String.format("%d,\"%s\",\"%s\",%s,%s,%s,\"%s\",%s\n",
+                        t.getId(),
+                        escape(t.getTitle()),
+                        escape(t.getDescription()),
+                        t.getStatus(),
+                        t.getPriority(),
+                        t.getDueDate() != null ? t.getDueDate() : "",
+                        escape(t.getAssigneeName()),
+                        t.getCreatedAt()));
+            }
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/csv")
+                    .header("Content-Disposition", "attachment; filename=projeto_" + projectId + ".csv")
+                    .body(csv.toString());
+        }
+        return ResponseEntity.ok(tasks);
+    }
+
+    private String escape(String s) {
+        return s != null ? s.replace("\"", "\"\"") : "";
+    }
 }

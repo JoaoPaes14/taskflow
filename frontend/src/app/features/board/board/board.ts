@@ -219,6 +219,23 @@ export class Board implements OnInit, OnDestroy {
     this.showStats.set(!this.showStats());
   }
 
+  exportProject(format: string): void {
+    const projectId = this.project()?.id;
+    if (!projectId) return;
+    this.tasks.export(projectId, format).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `projeto_${projectId}.${format}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.toast.success(`Exportado como ${format.toUpperCase()}.`);
+      },
+      error: () => this.toast.error('Erro ao exportar projeto.'),
+    });
+  }
+
   onSearch(): void {
     const q = this.searchQuery.trim();
     if (!q) {
