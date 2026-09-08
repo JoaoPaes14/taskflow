@@ -168,6 +168,19 @@
         }
       </section>
     } @else {
+      @if (selectedIds().size > 0) {
+        <div class="bulk-bar">
+          <span class="bulk-count">{{ selectedIds().size }} selecionada(s)</span>
+          <div class="bulk-actions">
+            <button class="bulk-btn" (click)="batchMove('TODO')">Mover para A fazer</button>
+            <button class="bulk-btn" (click)="batchMove('IN_PROGRESS')">Mover para Em progresso</button>
+            <button class="bulk-btn" (click)="batchMove('DONE')">Concluir</button>
+            <button class="bulk-btn" (click)="batchArchive()">Arquivar</button>
+            <button class="bulk-btn danger" (click)="batchDelete()">Deletar</button>
+            <button class="bulk-btn cancel" (click)="clearSelection()">Cancelar</button>
+          </div>
+        </div>
+      }
       <section class="board">
         @for (col of columns; track col.key; let colIndex = $index) {
           <div
@@ -195,11 +208,19 @@
                   [class.done]="task.status === 'DONE'"
                   [class.overdue]="isOverdue(task)"
                   [class.dragging]="draggingId === task.id"
+                  [class.selected]="isSelected(task.id)"
                   draggable="true"
                   (dragstart)="onDragStart($event, task)"
                   (dragend)="onDragEnd()"
                   [style.animation-delay]="(taskIndex * 0.03) + 's'"
                 >
+                  <div class="task-select" (click)="$event.stopPropagation(); toggleSelect(task.id)">
+                    <div class="checkbox" [class.checked]="isSelected(task.id)">
+                      @if (isSelected(task.id)) {
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      }
+                    </div>
+                  </div>
                   @if (task.labels && task.labels.length > 0) {
                     <div class="task-labels-row">
                       @for (label of task.labels; track label.id) {

@@ -1,5 +1,6 @@
 package com.taskflow.controller;
 
+import com.taskflow.dto.BatchStatusRequest;
 import com.taskflow.dto.PageResponseDTO;
 import com.taskflow.dto.ProjectStatsDTO;
 import com.taskflow.dto.ProjectTaskDTO;
@@ -125,6 +126,43 @@ public class ProjectTaskController {
                     .body(csv.toString());
         }
         return ResponseEntity.ok(tasks);
+    }
+
+    @PatchMapping("/tasks/batch/archive")
+    public ResponseEntity<Void> batchArchive(
+            @RequestBody List<Long> taskIds,
+            @RequestAttribute("userId") Long userId) {
+        for (Long taskId : taskIds) {
+            try {
+                taskService.archiveTask(taskId, userId);
+            } catch (Exception ignored) {}
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/tasks/batch/status")
+    public ResponseEntity<Void> batchUpdateStatus(
+            @RequestBody BatchStatusRequest request,
+            @RequestAttribute("userId") Long userId) {
+        for (Long taskId : request.getTaskIds()) {
+            try {
+                taskService.updateTaskStatus(taskId,
+                        new UpdateTaskStatusDTO(request.getStatus(), null), userId);
+            } catch (Exception ignored) {}
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/tasks/batch")
+    public ResponseEntity<Void> batchDelete(
+            @RequestBody List<Long> taskIds,
+            @RequestAttribute("userId") Long userId) {
+        for (Long taskId : taskIds) {
+            try {
+                taskService.deleteTask(taskId, userId);
+            } catch (Exception ignored) {}
+        }
+        return ResponseEntity.noContent().build();
     }
 
     private String escape(String s) {

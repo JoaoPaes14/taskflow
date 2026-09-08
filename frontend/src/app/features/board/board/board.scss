@@ -267,6 +267,55 @@
   }
 }
 
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--primary);
+  color: white;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  animation: fadeIn 0.2s ease;
+
+  .bulk-count {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .bulk-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .bulk-btn {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover { background: rgba(255, 255, 255, 0.2); }
+
+    &.danger {
+      background: var(--danger);
+      border-color: var(--danger);
+      &:hover { background: #dc2626; }
+    }
+
+    &.cancel {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.5);
+      &:hover { background: rgba(255, 255, 255, 0.1); }
+    }
+  }
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -418,11 +467,43 @@
   cursor: grab;
   transition: all 0.2s ease;
   animation: fadeInUp 0.3s ease both;
+  display: flex;
+  gap: 0.5rem;
 
   &:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
     border-color: rgba(99, 102, 241, 0.2);
+  }
+
+  &.selected {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  .task-select {
+    flex-shrink: 0;
+    padding-top: 2px;
+
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      &:hover { border-color: var(--primary); }
+
+      &.checked {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+      }
+    }
   }
 
   &:active {

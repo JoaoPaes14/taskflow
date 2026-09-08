@@ -6,6 +6,7 @@ import {
   ProjectTaskRequest,
   TaskComment,
   TaskCommentRequest,
+  TaskStatus,
   UpdateTaskStatusRequest,
 } from '../models/task.model';
 import { PageResponse } from '../models/page.model';
@@ -75,6 +76,18 @@ export class TaskService {
       params: { format },
       responseType: 'blob',
     });
+  }
+
+  batchArchive(taskIds: number[]): Observable<void> {
+    return this.http.patch<void>(`${this.API}/tasks/batch/archive`, taskIds);
+  }
+
+  batchUpdateStatus(taskIds: number[], status: TaskStatus): Observable<void> {
+    return this.http.patch<void>(`${this.API}/tasks/batch/status`, { taskIds, status });
+  }
+
+  batchDelete(taskIds: number[]): Observable<void> {
+    return this.http.delete<void>(`${this.API}/tasks/batch`, { body: taskIds });
   }
 
   getComments(taskId: number): Observable<TaskComment[]> {

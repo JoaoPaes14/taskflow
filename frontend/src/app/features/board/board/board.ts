@@ -106,6 +106,7 @@ export class Board implements OnInit, OnDestroy {
   showMembers = signal(false);
   inviteEmail = '';
   inviteSubmitting = signal(false);
+  selectedIds = signal<Set<number>>(new Set());
 
   confirmOpen = signal(false);
   confirmTitle = signal('');
@@ -718,6 +719,64 @@ export class Board implements OnInit, OnDestroy {
 
   isDependencySelected(taskId: number): boolean {
     return this.formDependencyIds.includes(taskId);
+  }
+
+  toggleSelect(taskId: number): void {
+    this.selectedIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  }
+
+  isSelected(taskId: number): boolean {
+    return this.selectedIds().has(taskId);
+  }
+
+  clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  batchArchive(): void {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+    this.tasks.batchArchive(ids).subscribe({
+      next: () => {
+        this.tasksList.update((list) => list.filter((t) => !ids.includes(t.id)));
+        this.clearSelection();
+        this.toast.success(`${ids.length} tarefa(s) arquivada(s).`);
+      },
+      error: () => this.toast.error('Erro ao arquivar tarefas.'),
+    });
+  }
+
+  batchMove(status: TaskStatus): void {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+    this.tasks.batchUpdateStatus(ids, status).subscribe({
+      next: () => {
+        this.tasksList.update((list) =>
+          list.map((t) => ids.includes(t.id) ? { ...t, status } : t)
+        );
+        this.clearSelection();
+        this.toast.success(`${ids.length} tarefa(s) movida(s).`);
+      },
+      error: () => this.toast.error('Erro ao mover tarefas.'),
+    });
+  }
+
+  batchDelete(): void {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+    this.tasks.batchDelete(ids).subscribe({
+      next: () => {
+        this.tasksList.update((list) => list.filter((t) => !ids.includes(t.id)));
+        this.clearSelection();
+        this.toast.success(`${ids.length} tarefa(s) deletada(s).`);
+      },
+      error: () => this.toast.error('Erro ao deletar tarefas.'),
+    });
   }
 
   setFilterAssignee(userId: number | null): void {
