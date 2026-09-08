@@ -91,7 +91,7 @@ class ProjectTaskServiceTest {
     void createTask_allowsMember() {
         ProjectTaskRequestDTO req = new ProjectTaskRequestDTO(
                 "Nova", null, ProjectTask.TaskStatus.TODO,
-                ProjectTask.TaskPriority.HIGH, null, null, null);
+                ProjectTask.TaskPriority.HIGH, null, null, null, null);
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
         when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
@@ -106,7 +106,7 @@ class ProjectTaskServiceTest {
 
     @Test
     void createTask_deniesNonMember() {
-        ProjectTaskRequestDTO req = new ProjectTaskRequestDTO("Nova", null, null, null, null, null, null);
+        ProjectTaskRequestDTO req = new ProjectTaskRequestDTO("Nova", null, null, null, null, null, null, null);
         lenient().doThrow(new UnauthorizedException("no access"))
                 .when(accessService).requireMember(10L, 999L);
 
@@ -119,7 +119,7 @@ class ProjectTaskServiceTest {
                 .id(2L).name("Maria").email("m@m.com").password("x").role(Role.MEMBER).build();
         ProjectTaskRequestDTO req = new ProjectTaskRequestDTO(
                 "Nova", null, ProjectTask.TaskStatus.TODO,
-                ProjectTask.TaskPriority.MEDIUM, null, 2L, null);
+                ProjectTask.TaskPriority.MEDIUM, null, null, 2L, null);
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
         when(projectRepository.findActiveById(10L)).thenReturn(Optional.of(project));
         when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
@@ -184,7 +184,7 @@ class ProjectTaskServiceTest {
     void updateTask_repositionsWhenStatusChanges() {
         ProjectTaskRequestDTO req = new ProjectTaskRequestDTO(
                 "Tarefa 1", null, ProjectTask.TaskStatus.DONE,
-                ProjectTask.TaskPriority.MEDIUM, null, null, null);
+                ProjectTask.TaskPriority.MEDIUM, null, null, null, null);
         when(taskRepository.findById(100L)).thenReturn(Optional.of(task));
         when(projectRepository.isUserMember(10L, 1L)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(owner));

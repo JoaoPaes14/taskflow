@@ -19,6 +19,7 @@ import {
   TaskLabel,
   TaskPriority,
   TaskStatus,
+  TaskRecurrence,
   Attachment,
 } from '../../../core/models/task.model';
 
@@ -60,6 +61,7 @@ export class Board implements OnInit, OnDestroy {
   formDescription = '';
   formPriority: TaskPriority = 'MEDIUM';
   formDueDate = '';
+  formRecurrence: TaskRecurrence = 'NONE';
   formAssigneeId: number | null = null;
   formLabelIds: number[] = [];
 
@@ -300,6 +302,7 @@ export class Board implements OnInit, OnDestroy {
     this.formDescription = '';
     this.formPriority = 'MEDIUM';
     this.formDueDate = '';
+    this.formRecurrence = 'NONE';
     this.formAssigneeId = null;
     this.formLabelIds = [];
     this.pendingStatus = status;
@@ -317,6 +320,7 @@ export class Board implements OnInit, OnDestroy {
     this.formDescription = task.description || '';
     this.formPriority = task.priority;
     this.formDueDate = task.dueDate || '';
+    this.formRecurrence = task.recurrence || 'NONE';
     this.formAssigneeId = task.assigneeId ?? null;
     this.formLabelIds = (task.labels ?? []).map((l) => l.id);
     this.pendingStatus = task.status;
@@ -551,6 +555,7 @@ export class Board implements OnInit, OnDestroy {
       priority: this.formPriority,
       status: this.pendingStatus,
       dueDate: this.formDueDate || undefined,
+      recurrence: this.formRecurrence,
       assigneeId: this.formAssigneeId ?? undefined,
       labelIds: this.formLabelIds.length > 0 ? this.formLabelIds : undefined,
     };

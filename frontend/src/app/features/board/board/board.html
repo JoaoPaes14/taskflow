@@ -235,6 +235,12 @@
                         {{ task.dueDate }}
                       </span>
                     }
+                    @if (task.recurrence && task.recurrence !== 'NONE') {
+                      <span class="recurrence-badge">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        {{ task.recurrence === 'DAILY' ? 'Diaria' : task.recurrence === 'WEEKLY' ? 'Semanal' : 'Mensal' }}
+                      </span>
+                    }
                   </div>
 
                   <div class="task-actions">
@@ -307,6 +313,15 @@
           <div class="field">
             <label for="task-due">Vencimento</label>
             <input type="date" id="task-due" [(ngModel)]="formDueDate" name="taskDue" />
+          </div>
+          <div class="field">
+            <label for="task-recurrence">Recorrencia</label>
+            <select id="task-recurrence" [(ngModel)]="formRecurrence" name="taskRecurrence">
+              <option value="NONE">Nenhuma</option>
+              <option value="DAILY">Diaria</option>
+              <option value="WEEKLY">Semanal</option>
+              <option value="MONTHLY">Mensal</option>
+            </select>
           </div>
         </div>
         <div class="field">

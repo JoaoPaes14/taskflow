@@ -43,4 +43,7 @@ public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> 
 
     @Query(value = "SELECT * FROM project_tasks t WHERE t.project_id = :projectId AND t.archived = false AND MATCH(t.title, t.description) AGAINST (:query IN NATURAL LANGUAGE MODE) ORDER BY t.position ASC", nativeQuery = true)
     List<ProjectTask> searchByFullText(@Param("projectId") Long projectId, @Param("query") String query);
+
+    @Query("SELECT t FROM ProjectTask t WHERE t.status = 'DONE' AND t.recurrence <> 'NONE' AND t.nextRecurrenceDate <= :date")
+    List<ProjectTask> findCompletedRecurringTasks(@Param("date") LocalDate date);
 }

@@ -24,6 +24,7 @@ public class ProjectTaskDTO {
     private ProjectTask.TaskStatus status;
     private ProjectTask.TaskPriority priority;
     private LocalDate dueDate;
+    private ProjectTask.TaskRecurrence recurrence;
     private Integer position;
     private Boolean archived;
 
@@ -49,6 +50,7 @@ public class ProjectTaskDTO {
                 .status(task.getStatus())
                 .priority(task.getPriority())
                 .dueDate(task.getDueDate())
+                .recurrence(task.getRecurrence())
                 .position(task.getPosition())
                 .archived(task.getArchived())
                 .createdById(task.getCreatedBy() != null ? task.getCreatedBy().getId() : null)

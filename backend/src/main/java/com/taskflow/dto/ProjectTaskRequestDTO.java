@@ -28,6 +28,8 @@ public class ProjectTaskRequestDTO {
 
     private LocalDate dueDate;
 
+    private ProjectTask.TaskRecurrence recurrence;
+
     private Long assigneeId;
 
     private List<Long> labelIds;

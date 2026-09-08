@@ -571,6 +571,18 @@
         font-weight: 700;
       }
     }
+
+    .recurrence-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      font-size: 0.68rem;
+      color: #8b5cf6;
+      font-weight: 600;
+      background: rgba(139, 92, 246, 0.1);
+      padding: 0.1rem 0.4rem;
+      border-radius: 6px;
+    }
   }
 
   .task-actions {

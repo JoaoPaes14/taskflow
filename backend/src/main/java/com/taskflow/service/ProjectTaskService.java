@@ -128,6 +128,8 @@ public class ProjectTaskService {
                 .status(request.getStatus() != null ? request.getStatus() : ProjectTask.TaskStatus.TODO)
                 .priority(request.getPriority() != null ? request.getPriority() : ProjectTask.TaskPriority.MEDIUM)
                 .dueDate(request.getDueDate())
+                .recurrence(request.getRecurrence() != null ? request.getRecurrence() : ProjectTask.TaskRecurrence.NONE)
+                .nextRecurrenceDate(request.getDueDate())
                 .position(position)
                 .project(project)
                 .assignee(assignee)
@@ -171,6 +173,10 @@ public class ProjectTaskService {
         task.setStatus(request.getStatus() != null ? request.getStatus() : task.getStatus());
         task.setPriority(request.getPriority() != null ? request.getPriority() : task.getPriority());
         task.setDueDate(request.getDueDate() != null ? request.getDueDate() : task.getDueDate());
+        task.setRecurrence(request.getRecurrence() != null ? request.getRecurrence() : task.getRecurrence());
+        if (request.getDueDate() != null) {
+            task.setNextRecurrenceDate(request.getDueDate());
+        }
         task.setAssignee(assignee != null ? assignee : task.getAssignee());
         task.setLabels(labels);
 

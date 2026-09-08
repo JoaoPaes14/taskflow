@@ -1,5 +1,6 @@
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
+export type TaskRecurrence = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
 export interface TaskLabel {
   id: number;
@@ -25,6 +26,7 @@ export interface ProjectTask {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate?: string;
+  recurrence: TaskRecurrence;
   position: number;
   archived?: boolean;
   assigneeId?: number;
@@ -43,6 +45,7 @@ export interface ProjectTaskRequest {
   status?: TaskStatus;
   priority?: TaskPriority;
   dueDate?: string;
+  recurrence?: TaskRecurrence;
   assigneeId?: number;
   labelIds?: number[];
 }

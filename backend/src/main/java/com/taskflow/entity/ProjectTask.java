@@ -41,6 +41,14 @@ public class ProjectTask {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    @Builder.Default
+    private TaskRecurrence recurrence = TaskRecurrence.NONE;
+
+    @Column(name = "next_recurrence_date")
+    private LocalDate nextRecurrenceDate;
+
     @Column(nullable = false)
     private Integer position;
 
@@ -102,5 +110,12 @@ public class ProjectTask {
         LOW,
         MEDIUM,
         HIGH
+    }
+
+    public enum TaskRecurrence {
+        NONE,
+        DAILY,
+        WEEKLY,
+        MONTHLY
     }
 }
