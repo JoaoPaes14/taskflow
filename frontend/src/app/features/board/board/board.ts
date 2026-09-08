@@ -98,6 +98,9 @@ export class Board implements OnInit, OnDestroy {
   showFilters = signal(false);
   searchQuery = '';
   searchResults = signal<ProjectTask[] | null>(null);
+  showMembers = signal(false);
+  inviteEmail = '';
+  inviteSubmitting = signal(false);
 
   confirmOpen = signal(false);
   confirmTitle = signal('');
@@ -253,6 +256,36 @@ export class Board implements OnInit, OnDestroy {
   clearSearch(): void {
     this.searchQuery = '';
     this.searchResults.set(null);
+  }
+
+  inviteMember(): void {
+    const projectId = this.project()?.id;
+    if (!projectId || !this.inviteEmail.trim()) return;
+    this.inviteSubmitting.set(true);
+    this.projects.inviteMember(projectId, this.inviteEmail.trim()).subscribe({
+      next: (member) => {
+        this.members.update((list) => [...list, member]);
+        this.inviteEmail = '';
+        this.inviteSubmitting.set(false);
+        this.toast.success('Membro adicionado!');
+      },
+      error: (err) => {
+        this.toast.error(err.error?.message || 'Erro ao adicionar membro.');
+        this.inviteSubmitting.set(false);
+      },
+    });
+  }
+
+  removeMember(userId: number): void {
+    const projectId = this.project()?.id;
+    if (!projectId) return;
+    this.projects.removeMember(projectId, userId).subscribe({
+      next: () => {
+        this.members.update((list) => list.filter((m) => m.userId !== userId));
+        this.toast.success('Membro removido.');
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao remover membro.'),
+    });
   }
 
   getTasks(status: TaskStatus): ProjectTask[] {

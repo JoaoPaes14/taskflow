@@ -59,6 +59,13 @@
             <span class="badge-count">{{ projectLabels().length }}</span>
           }
         </button>
+        <button class="btn-members" (click)="showMembers.set(true)" title="Membros do projeto">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Membros
+          <span class="badge-count">{{ members().length }}</span>
+        </button>
         <button class="btn-filter" [class.active]="hasActiveFilters()" (click)="showFilters.set(!showFilters())" title="Filtros avancados">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
@@ -560,3 +567,45 @@
   (confirmed)="confirmConfirm()"
   (cancelled)="confirmClose()"
 />
+
+@if (showMembers()) {
+  <div class="modal-overlay" (click)="showMembers.set(false)">
+    <div class="modal members-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Membros do projeto</h2>
+        <button class="modal-close" (click)="showMembers.set(false)">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="invite-row">
+          <input
+            type="email"
+            placeholder="Email do membro"
+            [(ngModel)]="inviteEmail"
+            (keyup.enter)="inviteMember()"
+          />
+          <button class="btn-primary" [disabled]="inviteSubmitting() || !inviteEmail.trim()" (click)="inviteMember()">
+            {{ inviteSubmitting() ? '...' : 'Convidar' }}
+          </button>
+        </div>
+        <div class="members-list">
+          @for (m of members(); track m.userId) {
+            <div class="member-item">
+              <span class="member-avatar">{{ getInitial(m.name) }}</span>
+              <div class="member-info">
+                <span class="member-name">{{ m.name }}</span>
+                <span class="member-role">{{ m.role }}</span>
+              </div>
+              @if (m.userId !== project()?.createdById) {
+                <button class="btn-remove" (click)="removeMember(m.userId)" title="Remover">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              }
+            </div>
+          } @empty {
+            <p class="empty-text">Nenhum membro encontrado.</p>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
