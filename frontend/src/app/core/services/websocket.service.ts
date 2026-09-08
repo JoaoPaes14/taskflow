@@ -5,7 +5,12 @@ import { NotificationService } from './notification.service';
 import { ToastService } from './toast.service';
 import { AuthService } from './auth.service';
 import { Notification } from '../models/notification.model';
-import { TaskComment } from '../models/task.model';
+import { ProjectTask, TaskComment } from '../models/task.model';
+
+export interface TaskEvent {
+  event: string;
+  data: any;
+}
 
 @Injectable({ providedIn: 'root' })
 export class WebSocketService implements OnDestroy {
@@ -14,6 +19,7 @@ export class WebSocketService implements OnDestroy {
   private toast = inject(ToastService);
   private auth = inject(AuthService);
   private taskCommentSubscriptions = new Map<number, StompSubscription>();
+  private projectTaskSubscriptions = new Map<number, StompSubscription>();
 
   connected = signal(false);
 
@@ -64,9 +70,28 @@ export class WebSocketService implements OnDestroy {
     }
   }
 
+  subscribeToProjectTasks(projectId: number, callback: (event: TaskEvent) => void): void {
+    this.unsubscribeFromProjectTasks(projectId);
+    if (!this.client?.active) return;
+    const sub = this.client.subscribe(`/topic/projects/${projectId}/tasks`, (message: IMessage) => {
+      callback(JSON.parse(message.body));
+    });
+    this.projectTaskSubscriptions.set(projectId, sub);
+  }
+
+  unsubscribeFromProjectTasks(projectId: number): void {
+    const sub = this.projectTaskSubscriptions.get(projectId);
+    if (sub) {
+      sub.unsubscribe();
+      this.projectTaskSubscriptions.delete(projectId);
+    }
+  }
+
   disconnect(): void {
     this.taskCommentSubscriptions.forEach((sub) => sub.unsubscribe());
     this.taskCommentSubscriptions.clear();
+    this.projectTaskSubscriptions.forEach((sub) => sub.unsubscribe());
+    this.projectTaskSubscriptions.clear();
     if (this.client?.active) {
       this.client.deactivate();
       this.connected.set(false);

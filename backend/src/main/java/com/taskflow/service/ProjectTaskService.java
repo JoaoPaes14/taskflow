@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +47,7 @@ public class ProjectTaskService {
     private final TaskLabelRepository labelRepository;
     private final ProjectActivityService activityService;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Cacheable(value = "tasks", key = "#projectId")
     public List<ProjectTaskDTO> getTasks(Long projectId, Long userId) {
@@ -150,6 +152,7 @@ public class ProjectTaskService {
                     saved.getId(), "TASK");
         }
 
+        broadcastTaskEvent(projectId, "TASK_CREATED", ProjectTaskDTO.fromEntity(saved));
         return ProjectTaskDTO.fromEntity(saved);
     }
 
@@ -200,6 +203,7 @@ public class ProjectTaskService {
                     saved.getId(), "TASK");
         }
 
+        broadcastTaskEvent(task.getProject().getId(), "TASK_UPDATED", ProjectTaskDTO.fromEntity(saved));
         return ProjectTaskDTO.fromEntity(saved);
     }
 
@@ -238,6 +242,7 @@ public class ProjectTaskService {
         activityService.record(saved.getProject(), actor, ProjectActivity.ActionType.TASK_MOVED,
                 actor.getName() + " moveu a tarefa \"" + saved.getTitle() + "\" para " + statusLabel);
 
+        broadcastTaskEvent(projectId, "TASK_UPDATED", ProjectTaskDTO.fromEntity(saved));
         return ProjectTaskDTO.fromEntity(saved);
     }
 
@@ -251,6 +256,7 @@ public class ProjectTaskService {
         task.setArchived(true);
         taskRepository.save(task);
         renormalizeColumn(task.getProject().getId(), task.getStatus());
+        broadcastTaskEvent(task.getProject().getId(), "TASK_ARCHIVED", Map.of("taskId", taskId));
     }
 
     @Caching(evict = {
@@ -264,6 +270,7 @@ public class ProjectTaskService {
         task.setPosition((int) taskRepository.countByProjectIdAndStatusAndArchived(
                 task.getProject().getId(), task.getStatus(), false));
         taskRepository.save(task);
+        broadcastTaskEvent(task.getProject().getId(), "TASK_RESTORED", ProjectTaskDTO.fromEntity(task));
     }
 
     @Caching(evict = {
@@ -288,6 +295,15 @@ public class ProjectTaskService {
 
         activityService.record(project, actor, ProjectActivity.ActionType.TASK_DELETED,
                 actor.getName() + " excluiu a tarefa \"" + title + "\"");
+
+        broadcastTaskEvent(projectId, "TASK_DELETED", Map.of("taskId", taskId));
+    }
+
+    private void broadcastTaskEvent(Long projectId, String event, Object data) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("event", event);
+        payload.put("data", data);
+        messagingTemplate.convertAndSend("/topic/projects/" + projectId + "/tasks", payload);
     }
 
     private void renormalizeColumn(Long projectId, ProjectTask.TaskStatus status) {

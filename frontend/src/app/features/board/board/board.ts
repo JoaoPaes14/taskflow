@@ -168,7 +168,10 @@ export class Board implements OnInit, OnDestroy {
     const total = 4;
     const checkDone = () => {
       completed++;
-      if (completed >= total) this.loading.set(false);
+      if (completed >= total) {
+        this.loading.set(false);
+        this.subscribeToProjectTasks(projectId);
+      }
     };
     this.projects.getById(projectId).subscribe({
       next: (p) => this.project.set(p),
@@ -209,6 +212,48 @@ export class Board implements OnInit, OnDestroy {
     if (this.currentCommentTaskId !== null) {
       this.ws.unsubscribeFromTaskComments(this.currentCommentTaskId);
     }
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (id) this.ws.unsubscribeFromProjectTasks(id);
+  }
+
+  private subscribeToProjectTasks(projectId: number): void {
+    this.ws.subscribeToProjectTasks(projectId, (event) => {
+      switch (event.event) {
+        case 'TASK_CREATED': {
+          const task: ProjectTask = event.data;
+          this.tasksList.update((list) => {
+            if (list.some((t) => t.id === task.id)) return list;
+            return [...list, task];
+          });
+          break;
+        }
+        case 'TASK_UPDATED': {
+          const task: ProjectTask = event.data;
+          this.tasksList.update((list) =>
+            list.map((t) => (t.id === task.id ? task : t))
+          );
+          break;
+        }
+        case 'TASK_ARCHIVED': {
+          const { taskId } = event.data;
+          this.tasksList.update((list) => list.filter((t) => t.id !== taskId));
+          break;
+        }
+        case 'TASK_RESTORED': {
+          const task: ProjectTask = event.data;
+          this.tasksList.update((list) => {
+            if (list.some((t) => t.id === task.id)) return list;
+            return [...list, task];
+          });
+          break;
+        }
+        case 'TASK_DELETED': {
+          const { taskId } = event.data;
+          this.tasksList.update((list) => list.filter((t) => t.id !== taskId));
+          break;
+        }
+      }
+    });
   }
 
   private subscribeToTaskComments(taskId: number): void {
