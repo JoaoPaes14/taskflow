@@ -303,7 +303,7 @@ public class ProjectTaskService {
         Map<String, Object> payload = new HashMap<>();
         payload.put("event", event);
         payload.put("data", data);
-        messagingTemplate.convertAndSend("/topic/projects/" + projectId + "/tasks", payload);
+        messagingTemplate.convertAndSend("/topic/projects/" + projectId + "/tasks", (Object) payload);
     }
 
     private void renormalizeColumn(Long projectId, ProjectTask.TaskStatus status) {
