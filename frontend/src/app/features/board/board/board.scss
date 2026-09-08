@@ -775,6 +775,40 @@
   }
 }
 
+.dep-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+
+  .dep-toggle {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      border-color: var(--primary);
+    }
+
+    &.selected {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      font-weight: 600;
+    }
+  }
+}
+
 .btn-primary {
   display: inline-flex;
   align-items: center;

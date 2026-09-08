@@ -33,4 +33,6 @@ public class ProjectTaskRequestDTO {
     private Long assigneeId;
 
     private List<Long> labelIds;
+
+    private List<Long> dependencyIds;
 }

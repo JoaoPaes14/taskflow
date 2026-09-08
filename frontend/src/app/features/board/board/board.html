@@ -353,6 +353,26 @@
           </div>
         }
 
+        @if (isEditing() && tasksList().length > 1) {
+          <div class="field">
+            <label>Dependencias</label>
+            <div class="dep-selector">
+              @for (t of tasksList(); track t.id) {
+                @if (t.id !== editingId()) {
+                  <button
+                    type="button"
+                    class="dep-toggle"
+                    [class.selected]="isDependencySelected(t.id)"
+                    (click)="toggleDependency(t.id)"
+                  >
+                    {{ t.title }}
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        }
+
         @if (isEditing()) {
           <div class="subtasks-section">
             <h3 class="section-title">

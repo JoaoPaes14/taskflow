@@ -38,6 +38,8 @@ public class ProjectTaskDTO {
 
     private List<SubtaskDTO> subtasks;
 
+    private List<Long> dependencyIds;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -73,6 +75,12 @@ public class ProjectTaskDTO {
         if (task.getSubtasks() != null && !task.getSubtasks().isEmpty()) {
             dto.setSubtasks(task.getSubtasks().stream()
                     .map(SubtaskDTO::fromEntity)
+                    .collect(Collectors.toList()));
+        }
+
+        if (task.getDependencies() != null && !task.getDependencies().isEmpty()) {
+            dto.setDependencyIds(task.getDependencies().stream()
+                    .map(ProjectTask::getId)
                     .collect(Collectors.toList()));
         }
 

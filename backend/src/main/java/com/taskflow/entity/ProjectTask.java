@@ -77,6 +77,15 @@ public class ProjectTask {
     @Builder.Default
     private Set<TaskLabel> labels = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "task_dependencies",
+        joinColumns = @JoinColumn(name = "task_id"),
+        inverseJoinColumns = @JoinColumn(name = "depends_on_id")
+    )
+    @Builder.Default
+    private Set<ProjectTask> dependencies = new HashSet<>();
+
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("position ASC")
     @Builder.Default

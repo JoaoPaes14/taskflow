@@ -118,6 +118,7 @@ public class ProjectTaskService {
 
         User assignee = resolveAssignee(projectId, request.getAssigneeId());
         Set<TaskLabel> labels = resolveLabels(projectId, request.getLabelIds());
+        Set<ProjectTask> dependencies = resolveDependencies(projectId, request.getDependencyIds());
 
         int position = (int) taskRepository.countByProjectIdAndStatusAndArchived(
                 projectId, request.getStatus() != null ? request.getStatus() : ProjectTask.TaskStatus.TODO, false);
@@ -135,6 +136,7 @@ public class ProjectTaskService {
                 .assignee(assignee)
                 .createdBy(creator)
                 .labels(labels)
+                .dependencies(dependencies)
                 .build();
 
         ProjectTask saved = taskRepository.save(task);
@@ -341,6 +343,20 @@ public class ProjectTaskService {
             labels.add(label);
         }
         return labels;
+    }
+
+    private Set<ProjectTask> resolveDependencies(Long projectId, List<Long> dependencyIds) {
+        Set<ProjectTask> deps = new HashSet<>();
+        if (dependencyIds == null || dependencyIds.isEmpty()) return deps;
+        for (Long depId : dependencyIds) {
+            ProjectTask dep = taskRepository.findById(depId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Dependency task not found"));
+            if (!dep.getProject().getId().equals(projectId)) {
+                throw new UnauthorizedException("Dependency task does not belong to this project");
+            }
+            deps.add(dep);
+        }
+        return deps;
     }
 
     private void requireAccess(Long projectId, Long userId) {

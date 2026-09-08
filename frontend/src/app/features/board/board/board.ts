@@ -64,6 +64,7 @@ export class Board implements OnInit, OnDestroy {
   formRecurrence: TaskRecurrence = 'NONE';
   formAssigneeId: number | null = null;
   formLabelIds: number[] = [];
+  formDependencyIds: number[] = [];
 
   comments = signal<TaskComment[]>([]);
   commentsLoading = signal(false);
@@ -305,6 +306,7 @@ export class Board implements OnInit, OnDestroy {
     this.formRecurrence = 'NONE';
     this.formAssigneeId = null;
     this.formLabelIds = [];
+    this.formDependencyIds = [];
     this.pendingStatus = status;
     this.comments.set([]);
     this.subtasks.set([]);
@@ -323,6 +325,7 @@ export class Board implements OnInit, OnDestroy {
     this.formRecurrence = task.recurrence || 'NONE';
     this.formAssigneeId = task.assigneeId ?? null;
     this.formLabelIds = (task.labels ?? []).map((l) => l.id);
+    this.formDependencyIds = task.dependencyIds ?? [];
     this.pendingStatus = task.status;
     this.showModal.set(true);
     this.loadComments(task.id);
@@ -558,6 +561,7 @@ export class Board implements OnInit, OnDestroy {
       recurrence: this.formRecurrence,
       assigneeId: this.formAssigneeId ?? undefined,
       labelIds: this.formLabelIds.length > 0 ? this.formLabelIds : undefined,
+      dependencyIds: this.formDependencyIds.length > 0 ? this.formDependencyIds : undefined,
     };
 
     this.submitting.set(true);
@@ -698,6 +702,16 @@ export class Board implements OnInit, OnDestroy {
 
   isLabelSelected(labelId: number): boolean {
     return this.formLabelIds.includes(labelId);
+  }
+
+  toggleDependency(taskId: number): void {
+    this.formDependencyIds = this.formDependencyIds.includes(taskId)
+      ? this.formDependencyIds.filter((id) => id !== taskId)
+      : [...this.formDependencyIds, taskId];
+  }
+
+  isDependencySelected(taskId: number): boolean {
+    return this.formDependencyIds.includes(taskId);
   }
 
   setFilterAssignee(userId: number | null): void {

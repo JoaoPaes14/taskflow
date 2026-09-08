@@ -35,6 +35,7 @@ export interface ProjectTask {
   createdByName: string;
   labels?: TaskLabel[];
   subtasks?: Subtask[];
+  dependencyIds?: number[];
   createdAt: string;
   updatedAt: string;
 }
@@ -48,6 +49,7 @@ export interface ProjectTaskRequest {
   recurrence?: TaskRecurrence;
   assigneeId?: number;
   labelIds?: number[];
+  dependencyIds?: number[];
 }
 
 export interface UpdateTaskStatusRequest {
