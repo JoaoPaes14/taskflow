@@ -22,6 +22,10 @@ export class LabelService {
     return this.http.post<TaskLabel>(`${this.API}/projects/${projectId}/labels`, data);
   }
 
+  updateLabel(projectId: number, labelId: number, data: TaskLabelRequest): Observable<TaskLabel> {
+    return this.http.put<TaskLabel>(`${this.API}/projects/${projectId}/labels/${labelId}`, data);
+  }
+
   deleteLabel(projectId: number, labelId: number): Observable<void> {
     return this.http.delete<void>(`${this.API}/projects/${projectId}/labels/${labelId}`);
   }

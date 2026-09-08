@@ -55,6 +55,17 @@ public class LabelService {
     }
 
     @CacheEvict(value = "labels", allEntries = true)
+    public TaskLabelDTO updateLabel(Long labelId, TaskLabelRequestDTO request, Long userId) {
+        TaskLabel label = labelRepository.findById(labelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
+        accessService.requireMember(label.getProject().getId(), userId);
+        label.setName(request.getName());
+        label.setColor(request.getColor());
+        TaskLabel saved = labelRepository.save(label);
+        return TaskLabelDTO.fromEntity(saved);
+    }
+
+    @CacheEvict(value = "labels", allEntries = true)
     public void deleteLabel(Long labelId, Long userId) {
         TaskLabel label = labelRepository.findById(labelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Label not found"));

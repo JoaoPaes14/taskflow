@@ -34,6 +34,15 @@ public class LabelController {
                 .body(labelService.createLabel(projectId, request, userId));
     }
 
+    @PutMapping("/{labelId}")
+    public ResponseEntity<TaskLabelDTO> updateLabel(
+            @PathVariable Long projectId,
+            @PathVariable Long labelId,
+            @Valid @RequestBody TaskLabelRequestDTO request,
+            @RequestAttribute("userId") Long userId) {
+        return ResponseEntity.ok(labelService.updateLabel(labelId, request, userId));
+    }
+
     @DeleteMapping("/{labelId}")
     public ResponseEntity<Void> deleteLabel(
             @PathVariable Long projectId,

@@ -99,6 +99,10 @@ export class Board implements OnInit, OnDestroy {
   newLabelColor = '#6366f1';
   labelSubmitting = signal(false);
 
+  editingLabelId = signal<number | null>(null);
+  editingLabelName = '';
+  editingLabelColor = '#6366f1';
+
   filterLabelIds = signal<number[]>([]);
   filterAssigneeId = signal<number | null>(null);
   filterPriority = signal<TaskPriority | null>(null);
@@ -780,6 +784,34 @@ export class Board implements OnInit, OnDestroy {
         this.labelSubmitting.set(false);
         this.toast.error(err.error?.message || 'Erro ao criar label.');
       },
+    });
+  }
+
+  startEditLabel(label: TaskLabel): void {
+    this.editingLabelId.set(label.id);
+    this.editingLabelName = label.name;
+    this.editingLabelColor = label.color;
+  }
+
+  cancelEditLabel(): void {
+    this.editingLabelId.set(null);
+    this.editingLabelName = '';
+    this.editingLabelColor = '#6366f1';
+  }
+
+  saveEditLabel(label: TaskLabel): void {
+    const project = this.project();
+    if (!project || !this.editingLabelName.trim()) return;
+    this.labels.updateLabel(project.id, label.id, {
+      name: this.editingLabelName.trim(),
+      color: this.editingLabelColor,
+    }).subscribe({
+      next: (updated) => {
+        this.projectLabels.update((list) => list.map((l) => (l.id === label.id ? updated : l)));
+        this.editingLabelId.set(null);
+        this.toast.success('Label atualizada.');
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar label.'),
     });
   }
 
