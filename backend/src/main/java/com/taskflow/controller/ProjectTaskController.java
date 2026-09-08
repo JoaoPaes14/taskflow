@@ -22,6 +22,12 @@ public class ProjectTaskController {
 
     private final ProjectTaskService taskService;
 
+    @GetMapping("/tasks/my")
+    public ResponseEntity<List<ProjectTaskDTO>> getMyTasks(
+            @RequestAttribute("userId") Long userId) {
+        return ResponseEntity.ok(taskService.getMyTasks(userId));
+    }
+
     @GetMapping("/projects/{projectId}/tasks")
     public ResponseEntity<?> getTasks(
             @PathVariable Long projectId,

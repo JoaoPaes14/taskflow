@@ -61,6 +61,7 @@ public class ProjectTaskService {
     public ProjectStatsDTO getStats(Long projectId, Long userId) {
         requireAccess(projectId, userId);
 
+
         long total = taskRepository.countByProjectIdAndArchived(projectId, false);
         long todo = taskRepository.countByProjectIdAndStatusAndArchived(projectId, ProjectTask.TaskStatus.TODO, false);
         long inProgress = taskRepository.countByProjectIdAndStatusAndArchived(projectId, ProjectTask.TaskStatus.IN_PROGRESS, false);
@@ -91,6 +92,12 @@ public class ProjectTaskService {
     public List<ProjectTaskDTO> searchTasks(Long projectId, String query, Long userId) {
         requireAccess(projectId, userId);
         return taskRepository.searchByFullText(projectId, query).stream()
+                .map(ProjectTaskDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProjectTaskDTO> getMyTasks(Long userId) {
+        return taskRepository.findAssignedToUser(userId).stream()
                 .map(ProjectTaskDTO::fromEntity)
                 .collect(Collectors.toList());
     }

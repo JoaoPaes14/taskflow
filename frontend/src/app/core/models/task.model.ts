@@ -21,6 +21,7 @@ export interface Subtask {
 export interface ProjectTask {
   id: number;
   projectId: number;
+  projectName?: string;
   title: string;
   description?: string;
   status: TaskStatus;

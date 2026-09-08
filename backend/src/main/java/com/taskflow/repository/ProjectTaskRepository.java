@@ -46,4 +46,7 @@ public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> 
 
     @Query("SELECT t FROM ProjectTask t WHERE t.status = 'DONE' AND t.recurrence <> 'NONE' AND t.nextRecurrenceDate <= :date")
     List<ProjectTask> findCompletedRecurringTasks(@Param("date") LocalDate date);
+
+    @Query("SELECT DISTINCT t FROM ProjectTask t JOIN FETCH t.createdBy LEFT JOIN FETCH t.assignee JOIN FETCH t.project LEFT JOIN FETCH t.labels WHERE t.assignee.id = :userId AND t.archived = false ORDER BY t.dueDate ASC NULLS LAST")
+    List<ProjectTask> findAssignedToUser(@Param("userId") Long userId);
 }

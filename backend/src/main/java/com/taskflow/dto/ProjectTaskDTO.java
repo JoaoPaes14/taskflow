@@ -19,6 +19,7 @@ public class ProjectTaskDTO {
 
     private Long id;
     private Long projectId;
+    private String projectName;
     private String title;
     private String description;
     private ProjectTask.TaskStatus status;
@@ -47,6 +48,7 @@ public class ProjectTaskDTO {
         ProjectTaskDTO dto = ProjectTaskDTO.builder()
                 .id(task.getId())
                 .projectId(task.getProject() != null ? task.getProject().getId() : null)
+                .projectName(task.getProject() != null ? task.getProject().getName() : null)
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .status(task.getStatus())

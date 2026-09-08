@@ -31,6 +31,10 @@ export class TaskService {
     return this.http.get<ProjectTask[]>(`${this.API}/projects/${projectId}/tasks`);
   }
 
+  getMyTasks(): Observable<ProjectTask[]> {
+    return this.http.get<ProjectTask[]>(`${this.API}/tasks/my`);
+  }
+
   getTasksPaged(projectId: number, page: number, size: number): Observable<PageResponse<ProjectTask>> {
     return this.http.get<PageResponse<ProjectTask>>(`${this.API}/projects/${projectId}/tasks`, {
       params: new HttpParams().set('page', page).set('size', size),

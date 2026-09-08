@@ -26,6 +26,12 @@ export const routes: Routes = [
       import('./features/board/board/board').then((m) => m.Board),
   },
   {
+    path: 'my-tasks',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/my-tasks/my-tasks').then((m) => m.MyTasksComponent),
+  },
+  {
     path: 'admin',
     canActivate: [authGuard],
     loadComponent: () =>
