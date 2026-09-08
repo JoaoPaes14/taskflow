@@ -6,11 +6,12 @@ import { NotificationService } from '../../../core/services/notification.service
 import { WebSocketService } from '../../../core/services/websocket.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { ConfirmModalComponent } from '../confirm-modal/confirm-modal';
+import { ProfileModalComponent } from '../../../features/profile/profile-modal';
 import { Notification } from '../../../core/models/notification.model';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, TitleCasePipe, DatePipe, ConfirmModalComponent],
+  imports: [RouterLink, RouterLinkActive, TitleCasePipe, DatePipe, ConfirmModalComponent, ProfileModalComponent],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -25,6 +26,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   collapsed = signal(false);
 
   confirmOpen = signal(false);
+  profileOpen = signal(false);
   showNotifications = signal(false);
   notifications = signal<Notification[]>([]);
   notificationsLoading = signal(false);

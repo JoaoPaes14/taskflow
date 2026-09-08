@@ -3,6 +3,7 @@ package com.taskflow.service;
 import com.taskflow.config.JwtUtil;
 import com.taskflow.dto.LoginRequestDTO;
 import com.taskflow.dto.RegisterRequestDTO;
+import com.taskflow.dto.UpdateProfileRequestDTO;
 import com.taskflow.dto.AuthResponseDTO;
 import com.taskflow.entity.Role;
 import com.taskflow.entity.User;
@@ -71,6 +72,29 @@ public class AuthService {
     public AuthResponseDTO getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return AuthResponseDTO.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .build();
+    }
+
+    public AuthResponseDTO updateProfile(Long userId, UpdateProfileRequestDTO request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!user.getEmail().equals(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyInUseException("Email already in use");
+        }
+
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        userRepository.save(user);
 
         return AuthResponseDTO.builder()
                 .userId(user.getId())

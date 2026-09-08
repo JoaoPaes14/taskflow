@@ -125,7 +125,7 @@
       </button>
     </div>
 
-    <div class="user-area">
+    <div class="user-area" (click)="profileOpen.set(true)" style="cursor: pointer">
       <div class="avatar" [class.admin]="isAdmin">
         {{ (user()?.name || 'U').charAt(0).toUpperCase() }}
       </div>
@@ -163,4 +163,9 @@
   [danger]="true"
   (confirmed)="confirmLogout()"
   (cancelled)="cancelLogout()"
+/>
+
+<app-profile-modal
+  [open]="profileOpen()"
+  (close)="profileOpen.set(false)"
 />

@@ -45,6 +45,12 @@ export class AuthService {
     });
   }
 
+  updateProfile(data: { name: string; email: string; password?: string }): Observable<AuthResponse> {
+    return this.http.put<AuthResponse>(`${this.API}/me`, data).pipe(
+      tap((res) => this.currentUser.set(res)),
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     this.currentUser.set(null);

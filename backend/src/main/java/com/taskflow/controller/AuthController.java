@@ -2,6 +2,7 @@ package com.taskflow.controller;
 
 import com.taskflow.dto.LoginRequestDTO;
 import com.taskflow.dto.RegisterRequestDTO;
+import com.taskflow.dto.UpdateProfileRequestDTO;
 import com.taskflow.dto.AuthResponseDTO;
 import com.taskflow.service.AuthService;
 import jakarta.validation.Valid;
@@ -35,6 +36,14 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> me(
             @RequestAttribute("userId") Long userId) {
         AuthResponseDTO response = authService.getProfile(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<AuthResponseDTO> updateProfile(
+            @RequestAttribute("userId") Long userId,
+            @Valid @RequestBody UpdateProfileRequestDTO request) {
+        AuthResponseDTO response = authService.updateProfile(userId, request);
         return ResponseEntity.ok(response);
     }
 }
