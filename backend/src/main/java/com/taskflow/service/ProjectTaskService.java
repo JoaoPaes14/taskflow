@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,7 @@ public class ProjectTaskService {
     private final ProjectActivityService activityService;
     private final NotificationService notificationService;
 
+    @Cacheable(value = "tasks", key = "#projectId")
     public List<ProjectTaskDTO> getTasks(Long projectId, Long userId) {
         requireAccess(projectId, userId);
         return taskRepository.findByProjectIdOrdered(projectId).stream()
@@ -58,6 +61,7 @@ public class ProjectTaskService {
         return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
+    @CacheEvict(value = "tasks", key = "#projectId")
     public ProjectTaskDTO createTask(Long projectId, ProjectTaskRequestDTO request, Long userId) {
         requireAccess(projectId, userId);
 
@@ -100,6 +104,7 @@ public class ProjectTaskService {
         return ProjectTaskDTO.fromEntity(saved);
     }
 
+    @CacheEvict(value = "tasks", allEntries = true)
     public ProjectTaskDTO updateTask(Long taskId, ProjectTaskRequestDTO request, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -142,6 +147,7 @@ public class ProjectTaskService {
         return ProjectTaskDTO.fromEntity(saved);
     }
 
+    @CacheEvict(value = "tasks", allEntries = true)
     public ProjectTaskDTO updateTaskStatus(Long taskId, UpdateTaskStatusDTO request, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -176,6 +182,7 @@ public class ProjectTaskService {
         return ProjectTaskDTO.fromEntity(saved);
     }
 
+    @CacheEvict(value = "tasks", allEntries = true)
     public void archiveTask(Long taskId, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -184,6 +191,7 @@ public class ProjectTaskService {
         renormalizeColumn(task.getProject().getId(), task.getStatus());
     }
 
+    @CacheEvict(value = "tasks", allEntries = true)
     public void restoreTask(Long taskId, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -193,6 +201,7 @@ public class ProjectTaskService {
         taskRepository.save(task);
     }
 
+    @CacheEvict(value = "tasks", allEntries = true)
     public void deleteTask(Long taskId, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);

@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,7 @@ public class ProjectService {
     private final ProjectAccessService accessService;
     private final NotificationService notificationService;
 
+    @CacheEvict(value = "projects", key = "#userId")
     public ProjectResponseDTO createProject(ProjectRequestDTO request, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -63,6 +66,7 @@ public class ProjectService {
         return ProjectResponseDTO.fromEntity(saved);
     }
 
+    @Cacheable(value = "projectById", key = "#id")
     public ProjectResponseDTO getProjectById(Long id, Long userId) {
         Project project = projectRepository.findActiveById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
@@ -72,6 +76,7 @@ public class ProjectService {
         return ProjectResponseDTO.fromEntity(project);
     }
 
+    @Cacheable(value = "projects", key = "#userId")
     public List<ProjectResponseDTO> getProjectsByUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -93,6 +98,7 @@ public class ProjectService {
         return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
+    @CacheEvict(value = "projectById", key = "#id")
     public ProjectResponseDTO updateProject(Long id, ProjectRequestDTO request, Long userId) {
         Project project = requireOwner(id, userId);
 
@@ -107,6 +113,7 @@ public class ProjectService {
         accessService.requireMember(projectId, userId);
     }
 
+    @Cacheable(value = "members", key = "#projectId")
     public List<ProjectMemberDTO> getMembers(Long projectId, Long userId) {
         requireAccess(projectId, userId);
         return projectMemberRepository.findByProjectId(projectId).stream()
@@ -114,6 +121,7 @@ public class ProjectService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "members", key = "#projectId")
     public ProjectMemberDTO inviteMember(Long projectId, InviteMemberRequestDTO request, Long userId) {
         Project project = requireOwner(projectId, userId);
 
@@ -143,6 +151,7 @@ public class ProjectService {
         return ProjectMemberDTO.fromEntity(saved);
     }
 
+    @CacheEvict(value = "members", key = "#projectId")
     public void removeMember(Long projectId, Long targetUserId, Long userId) {
         Project project = projectRepository.findActiveById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
@@ -172,12 +181,14 @@ public class ProjectService {
         activityService.record(project, actor, ProjectActivity.ActionType.MEMBER_REMOVED, message);
     }
 
+    @CacheEvict(value = "projectById", key = "#id")
     public void deleteProject(Long id, Long userId) {
         Project project = requireOwner(id, userId);
         project.setStatus(Project.ProjectStatus.DELETED);
         projectRepository.save(project);
     }
 
+    @CacheEvict(value = "projectById", key = "#id")
     public ProjectResponseDTO archiveProject(Long id, Long userId) {
         Project project = requireOwner(id, userId);
         project.setStatus(Project.ProjectStatus.ARCHIVED);
@@ -189,6 +200,7 @@ public class ProjectService {
         return dto;
     }
 
+    @CacheEvict(value = "projectById", key = "#id")
     public ProjectResponseDTO restoreProject(Long id, Long userId) {
         Project project = requireOwner(id, userId);
         project.setStatus(Project.ProjectStatus.ACTIVE);

@@ -10,6 +10,8 @@ import com.taskflow.repository.ProjectTaskRepository;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,12 +51,14 @@ public class AttachmentService {
 
     private static final long MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
+    @Cacheable(value = "attachments", key = "#taskId")
     public List<AttachmentDTO> getAttachments(Long taskId, Long userId) {
         return attachmentRepository.findByTaskIdOrderByCreatedAtDesc(taskId).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "attachments", key = "#taskId")
     public AttachmentDTO upload(Long taskId, MultipartFile file, Long userId) throws IOException {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
@@ -93,6 +97,7 @@ public class AttachmentService {
         return toDTO(attachmentRepository.save(attachment));
     }
 
+    @CacheEvict(value = "attachments", allEntries = true)
     public void delete(Long attachmentId, Long userId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Attachment not found"));

@@ -8,6 +8,8 @@ import com.taskflow.exception.ResourceNotFoundException;
 import com.taskflow.repository.ProjectTaskRepository;
 import com.taskflow.repository.SubtaskRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class SubtaskService {
     private final ProjectAccessService accessService;
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "subtasks", key = "#taskId")
     public List<SubtaskDTO> getSubtasks(Long taskId, Long userId) {
         ProjectTask task = getTask(taskId);
         accessService.requireMember(task.getProject().getId(), userId);
@@ -32,6 +35,7 @@ public class SubtaskService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "subtasks", key = "#taskId")
     public SubtaskDTO createSubtask(Long taskId, SubtaskRequestDTO request, Long userId) {
         ProjectTask task = getTask(taskId);
         accessService.requireMember(task.getProject().getId(), userId);
@@ -48,6 +52,7 @@ public class SubtaskService {
         return SubtaskDTO.fromEntity(subtask);
     }
 
+    @CacheEvict(value = "subtasks", allEntries = true)
     public SubtaskDTO toggleSubtask(Long subtaskId, Long userId) {
         Subtask subtask = subtaskRepository.findById(subtaskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Subtask not found"));
@@ -57,6 +62,7 @@ public class SubtaskService {
         return SubtaskDTO.fromEntity(subtaskRepository.save(subtask));
     }
 
+    @CacheEvict(value = "subtasks", allEntries = true)
     public void deleteSubtask(Long subtaskId, Long userId) {
         Subtask subtask = subtaskRepository.findById(subtaskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Subtask not found"));

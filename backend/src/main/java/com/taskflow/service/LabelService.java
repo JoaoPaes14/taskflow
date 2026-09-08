@@ -9,6 +9,8 @@ import com.taskflow.exception.UnauthorizedException;
 import com.taskflow.repository.ProjectRepository;
 import com.taskflow.repository.TaskLabelRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ public class LabelService {
     private final ProjectAccessService accessService;
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "labels", key = "#projectId")
     public List<TaskLabelDTO> getLabels(Long projectId, Long userId) {
         accessService.requireMember(projectId, userId);
         return labelRepository.findByProjectIdOrderByName(projectId).stream()
@@ -32,6 +35,7 @@ public class LabelService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "labels", key = "#projectId")
     public TaskLabelDTO createLabel(Long projectId, TaskLabelRequestDTO request, Long userId) {
         accessService.requireMember(projectId, userId);
         Project project = projectRepository.findActiveById(projectId)
@@ -50,6 +54,7 @@ public class LabelService {
         return TaskLabelDTO.fromEntity(label);
     }
 
+    @CacheEvict(value = "labels", allEntries = true)
     public void deleteLabel(Long labelId, Long userId) {
         TaskLabel label = labelRepository.findById(labelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Label not found"));
