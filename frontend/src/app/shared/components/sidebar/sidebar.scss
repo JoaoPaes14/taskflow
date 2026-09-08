@@ -303,6 +303,18 @@
           background: #dcfce7;
           color: #16a34a;
         }
+        &[data-type="DUE_DATE_TODAY"] {
+          background: #fef3c7;
+          color: #d97706;
+        }
+        &[data-type="DUE_DATE_TOMORROW"] {
+          background: #e0e7ff;
+          color: #4f46e5;
+        }
+        &[data-type="DUE_DATE_OVERDUE"] {
+          background: #fee2e2;
+          color: #dc2626;
+        }
       }
 
       .notif-body {

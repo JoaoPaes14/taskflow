@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -33,4 +34,10 @@ public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> 
 
     @Query("SELECT CAST(t.priority AS string), COUNT(t) FROM ProjectTask t WHERE t.project.id = :projectId AND t.archived = false GROUP BY t.priority")
     List<Object[]> countByPriority(@Param("projectId") Long projectId);
+
+    @Query("SELECT t FROM ProjectTask t JOIN FETCH t.assignee JOIN FETCH t.project WHERE t.archived = false AND t.status <> 'DONE' AND t.dueDate = :date")
+    List<ProjectTask> findTasksDueOnDate(@Param("date") LocalDate date);
+
+    @Query("SELECT t FROM ProjectTask t JOIN FETCH t.assignee JOIN FETCH t.project WHERE t.archived = false AND t.status <> 'DONE' AND t.dueDate BETWEEN :start AND :end")
+    List<ProjectTask> findTasksDueBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }
