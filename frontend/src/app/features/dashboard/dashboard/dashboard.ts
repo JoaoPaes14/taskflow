@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, HostListener, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
@@ -27,6 +27,10 @@ export class Dashboard implements OnInit {
 
   projectsList = signal<Project[]>([]);
   loading = signal(false);
+  loadingMore = signal(false);
+  page = signal(0);
+  hasMore = signal(true);
+  private PAGE_SIZE = 12;
 
   searchTerm = signal('');
   statusFilter = signal<'ALL' | 'ACTIVE' | 'ARCHIVED' | 'DELETED'>('ALL');
@@ -85,15 +89,49 @@ export class Dashboard implements OnInit {
     this.loadProjects();
   }
 
+  @HostListener('window:scroll')
+  onScroll(): void {
+    if (this.loadingMore() || !this.hasMore()) return;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const scrollTop = window.scrollY;
+    const clientHeight = window.innerHeight;
+    if (scrollTop + clientHeight >= scrollHeight - 200) {
+      this.loadMore();
+    }
+  }
+
   loadProjects(): void {
     this.loading.set(true);
-    this.projects.getAll().subscribe({
-      next: (list) => this.projectsList.set(list),
+    this.page.set(0);
+    this.hasMore.set(true);
+    this.projects.getAllPaged(0, this.PAGE_SIZE).subscribe({
+      next: (page) => {
+        this.projectsList.set(page.content);
+        this.hasMore.set(!page.last);
+        this.page.set(0);
+        this.loading.set(false);
+      },
       error: (err) => {
         this.toast.error(err.error?.message || 'Erro ao carregar projetos.');
         this.loading.set(false);
       },
-      complete: () => this.loading.set(false),
+    });
+  }
+
+  loadMore(): void {
+    if (this.loadingMore() || !this.hasMore()) return;
+    this.loadingMore.set(true);
+    const nextPage = this.page() + 1;
+    this.projects.getAllPaged(nextPage, this.PAGE_SIZE).subscribe({
+      next: (page) => {
+        this.projectsList.update((list) => [...list, ...page.content]);
+        this.hasMore.set(!page.last);
+        this.page.set(nextPage);
+        this.loadingMore.set(false);
+      },
+      error: () => {
+        this.loadingMore.set(false);
+      },
     });
   }
 

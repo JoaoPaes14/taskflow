@@ -61,6 +61,8 @@ export class Board implements OnInit {
 
   comments = signal<TaskComment[]>([]);
   commentsLoading = signal(false);
+  commentsHasMore = signal(true);
+  commentsPage = signal(0);
   commentSubmitting = signal(false);
   commentText = '';
 
@@ -222,16 +224,34 @@ export class Board implements OnInit {
   loadComments(taskId: number): void {
     this.commentsLoading.set(true);
     this.comments.set([]);
+    this.commentsPage.set(0);
+    this.commentsHasMore.set(true);
     this.commentText = '';
-    this.tasks.getComments(taskId).subscribe({
-      next: (list) => {
-        this.comments.set(list);
+    this.tasks.getCommentsPaged(taskId, 0, 10).subscribe({
+      next: (page) => {
+        this.comments.set(page.content);
+        this.commentsHasMore.set(!page.last);
+        this.commentsPage.set(0);
         this.commentsLoading.set(false);
       },
       error: (err) => {
         this.commentsLoading.set(false);
         this.toast.error(err.error?.message || 'Erro ao carregar comentarios.');
       },
+    });
+  }
+
+  loadMoreComments(): void {
+    const taskId = this.editingId();
+    if (!taskId || !this.commentsHasMore()) return;
+    const nextPage = this.commentsPage() + 1;
+    this.tasks.getCommentsPaged(taskId, nextPage, 10).subscribe({
+      next: (page) => {
+        this.comments.update((list) => [...list, ...page.content]);
+        this.commentsHasMore.set(!page.last);
+        this.commentsPage.set(nextPage);
+      },
+      error: () => {},
     });
   }
 

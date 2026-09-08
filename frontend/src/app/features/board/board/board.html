@@ -385,6 +385,9 @@
                   <p class="section-empty">Nenhum comentario ainda.</p>
                 }
               </div>
+              @if (commentsHasMore()) {
+                <button type="button" class="load-more-btn" (click)="loadMoreComments()">Carregar mais comentarios</button>
+              }
             }
             <div class="comment-form">
               <textarea

@@ -186,6 +186,12 @@
             </div>
           </div>
         }
+        @if (loadingMore()) {
+          <div class="loading-more">
+            <div class="spinner-small"></div>
+            <span>Carregando mais...</span>
+          </div>
+        }
       </section>
     }
   </main>
