@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -216,6 +216,35 @@ export class Board implements OnInit, OnDestroy {
       next: (s) => this.stats.set(s),
       error: () => {},
     });
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return;
+
+    if (event.key === 'Escape') {
+      if (this.showModal()) { this.closeModal(); return; }
+      if (this.editingCommentId()) { this.cancelEditComment(); return; }
+      if (this.showLabelsModal()) { this.showLabelsModal.set(false); return; }
+      if (this.showStats()) { this.showStats.set(false); return; }
+      if (this.showCalendar()) { this.showCalendar.set(false); return; }
+      if (this.showMembers()) { this.showMembers.set(false); return; }
+      if (this.showActivity()) { this.showActivity.set(false); return; }
+    }
+
+    if (event.key === 'n' || event.key === 'N') {
+      if (!this.showModal()) { this.openCreate('TODO'); event.preventDefault(); }
+    }
+
+    if (event.key === '1') { this.scrollToColumn('TODO'); event.preventDefault(); }
+    if (event.key === '2') { this.scrollToColumn('IN_PROGRESS'); event.preventDefault(); }
+    if (event.key === '3') { this.scrollToColumn('DONE'); event.preventDefault(); }
+  }
+
+  private scrollToColumn(status: string): void {
+    const el = document.querySelector(`.col-${status.toLowerCase()}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   ngOnDestroy(): void {
