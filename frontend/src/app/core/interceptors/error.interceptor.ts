@@ -11,9 +11,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401) {
-        localStorage.removeItem('taskflow_token');
-        router.navigate(['/login']);
-        toast.error('Sessao expirada. Faca login novamente.');
+        if (!req.url.includes('/api/auth/')) {
+          localStorage.removeItem('taskflow_token');
+          router.navigate(['/login']);
+          toast.error('Sessao expirada. Faca login novamente.');
+        }
       } else if (error.status === 403) {
         toast.error('Voce nao tem permissao para esta acao.');
       } else if (error.status === 404) {
