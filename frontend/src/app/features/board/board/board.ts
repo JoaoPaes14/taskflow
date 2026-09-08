@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal';
 import { StatsComponent } from '../../dashboard/stats/stats';
+import { CalendarComponent } from '../calendar/calendar';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService, ProjectStats } from '../../../core/services/task.service';
 import { LabelService } from '../../../core/services/label.service';
@@ -31,7 +32,7 @@ const COLUMNS: { key: TaskStatus; label: string }[] = [
 
 @Component({
   selector: 'app-board',
-  imports: [SidebarComponent, FormsModule, DatePipe, ConfirmModalComponent, StatsComponent],
+  imports: [SidebarComponent, FormsModule, DatePipe, ConfirmModalComponent, StatsComponent, CalendarComponent],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -88,6 +89,7 @@ export class Board implements OnInit, OnDestroy {
 
   stats = signal<ProjectStats | null>(null);
   showStats = signal(false);
+  showCalendar = signal(false);
 
   projectLabels = signal<TaskLabel[]>([]);
   showLabelsModal = signal(false);
@@ -223,6 +225,10 @@ export class Board implements OnInit, OnDestroy {
 
   toggleStats(): void {
     this.showStats.set(!this.showStats());
+  }
+
+  toggleCalendar(): void {
+    this.showCalendar.set(!this.showCalendar());
   }
 
   exportProject(format: string): void {
