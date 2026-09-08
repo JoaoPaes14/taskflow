@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { TaskService, ProjectStats } from '../../../core/services/task.service';
 import { LabelService } from '../../../core/services/label.service';
 import { SubtaskService, Subtask } from '../../../core/services/subtask.service';
 import { AttachmentService } from '../../../core/services/attachment.service';
+import { WebSocketService } from '../../../core/services/websocket.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Project, ProjectActivity, ProjectMember } from '../../../core/models/project.model';
 import {
@@ -33,7 +34,7 @@ const COLUMNS: { key: TaskStatus; label: string }[] = [
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
-export class Board implements OnInit {
+export class Board implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private projects = inject(ProjectService);
@@ -41,7 +42,9 @@ export class Board implements OnInit {
   private labels = inject(LabelService);
   private subtaskApi = inject(SubtaskService);
   private attachmentApi = inject(AttachmentService);
+  private ws = inject(WebSocketService);
   private toast = inject(ToastService);
+  private currentCommentTaskId: number | null = null;
 
   project = signal<Project | null>(null);
   members = signal<ProjectMember[]>([]);
@@ -193,6 +196,25 @@ export class Board implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.currentCommentTaskId !== null) {
+      this.ws.unsubscribeFromTaskComments(this.currentCommentTaskId);
+    }
+  }
+
+  private subscribeToTaskComments(taskId: number): void {
+    if (this.currentCommentTaskId !== null) {
+      this.ws.unsubscribeFromTaskComments(this.currentCommentTaskId);
+    }
+    this.currentCommentTaskId = taskId;
+    this.ws.subscribeToTaskComments(taskId, (comment) => {
+      const current = this.comments();
+      if (!current.some((c) => c.id === comment.id)) {
+        this.comments.update((list) => [...list, comment]);
+      }
+    });
+  }
+
   toggleStats(): void {
     this.showStats.set(!this.showStats());
   }
@@ -252,6 +274,7 @@ export class Board implements OnInit {
     this.loadComments(task.id);
     this.loadSubtasks(task.id);
     this.loadAttachments(task.id);
+    this.subscribeToTaskComments(task.id);
   }
 
   loadComments(taskId: number): void {
@@ -451,6 +474,10 @@ export class Board implements OnInit {
   }
 
   closeModal(): void {
+    if (this.currentCommentTaskId !== null) {
+      this.ws.unsubscribeFromTaskComments(this.currentCommentTaskId);
+      this.currentCommentTaskId = null;
+    }
     this.showModal.set(false);
     this.comments.set([]);
     this.subtasks.set([]);

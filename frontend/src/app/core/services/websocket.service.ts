@@ -1,10 +1,11 @@
 import { Injectable, inject, signal, OnDestroy } from '@angular/core';
-import { Client, IMessage } from '@stomp/stompjs';
+import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { NotificationService } from './notification.service';
 import { ToastService } from './toast.service';
 import { AuthService } from './auth.service';
 import { Notification } from '../models/notification.model';
+import { TaskComment } from '../models/task.model';
 
 @Injectable({ providedIn: 'root' })
 export class WebSocketService implements OnDestroy {
@@ -12,6 +13,7 @@ export class WebSocketService implements OnDestroy {
   private notificationApi = inject(NotificationService);
   private toast = inject(ToastService);
   private auth = inject(AuthService);
+  private taskCommentSubscriptions = new Map<number, StompSubscription>();
 
   connected = signal(false);
 
@@ -45,7 +47,26 @@ export class WebSocketService implements OnDestroy {
     this.client.activate();
   }
 
+  subscribeToTaskComments(taskId: number, callback: (comment: TaskComment) => void): void {
+    this.unsubscribeFromTaskComments(taskId);
+    if (!this.client?.active) return;
+    const sub = this.client.subscribe(`/topic/tasks/${taskId}/comments`, (message: IMessage) => {
+      callback(JSON.parse(message.body));
+    });
+    this.taskCommentSubscriptions.set(taskId, sub);
+  }
+
+  unsubscribeFromTaskComments(taskId: number): void {
+    const sub = this.taskCommentSubscriptions.get(taskId);
+    if (sub) {
+      sub.unsubscribe();
+      this.taskCommentSubscriptions.delete(taskId);
+    }
+  }
+
   disconnect(): void {
+    this.taskCommentSubscriptions.forEach((sub) => sub.unsubscribe());
+    this.taskCommentSubscriptions.clear();
     if (this.client?.active) {
       this.client.deactivate();
       this.connected.set(false);

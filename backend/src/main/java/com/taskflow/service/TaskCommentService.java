@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ public class TaskCommentService {
     private final ProjectAccessService accessService;
     private final ProjectActivityService activityService;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional(readOnly = true)
     public List<TaskCommentDTO> getComments(Long taskId, Long userId) {
@@ -85,6 +87,8 @@ public class TaskCommentService {
                     author.getName() + " comentou na tarefa \"" + task.getTitle() + "\"",
                     task.getId(), "TASK");
         }
+
+        messagingTemplate.convertAndSend("/topic/tasks/" + task.getId() + "/comments", TaskCommentDTO.fromEntity(comment));
 
         return TaskCommentDTO.fromEntity(comment);
     }
