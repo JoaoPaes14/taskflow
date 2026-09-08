@@ -82,6 +82,10 @@ export class TaskService {
     });
   }
 
+  import(projectId: number, tasks: any[]): Observable<ProjectTask[]> {
+    return this.http.post<ProjectTask[]>(`${this.API}/projects/${projectId}/import`, tasks);
+  }
+
   batchArchive(taskIds: number[]): Observable<void> {
     return this.http.patch<void>(`${this.API}/tasks/batch/archive`, taskIds);
   }

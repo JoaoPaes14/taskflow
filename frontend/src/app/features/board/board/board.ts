@@ -314,10 +314,67 @@ export class Board implements OnInit, OnDestroy {
         a.download = `projeto_${projectId}.${format}`;
         a.click();
         URL.revokeObjectURL(url);
-        this.toast.success(`Exportado como ${format.toUpperCase()}.`);
       },
       error: () => this.toast.error('Erro ao exportar projeto.'),
     });
+  }
+
+  importTasks(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files?.[0];
+    if (!file) return;
+    const projectId = this.project()?.id;
+    if (!projectId) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = reader.result as string;
+      let tasks: any[] = [];
+
+      if (file.name.endsWith('.json')) {
+        try {
+          const parsed = JSON.parse(content);
+          tasks = (Array.isArray(parsed) ? parsed : []).map((t: any) => ({
+            title: t.title || t.Titulo || 'Sem titulo',
+            description: t.description || t.Descricao || '',
+            status: t.status || t.Status || 'TODO',
+            priority: t.priority || t.Prioridade || 'MEDIUM',
+            dueDate: t.dueDate || t['Data Limite'] || null,
+          }));
+        } catch {
+          this.toast.error('JSON invalido.');
+          return;
+        }
+      } else if (file.name.endsWith('.csv')) {
+        const lines = content.split('\n').filter((l) => l.trim());
+        if (lines.length < 2) { this.toast.error('CSV vazio.'); return; }
+        const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(',').map((v) => v.trim().replace(/^"|"$/g, ''));
+          const row: any = {};
+          headers.forEach((h, idx) => row[h] = values[idx]);
+          tasks.push({
+            title: row.titulo || row.title || 'Sem titulo',
+            description: row.descricao || row.description || '',
+            status: (row.status || 'TODO').toUpperCase(),
+            priority: (row.prioridade || row.priority || 'MEDIUM').toUpperCase(),
+            dueDate: row['data limite'] || row.duedate || null,
+          });
+        }
+      }
+
+      if (tasks.length === 0) { this.toast.error('Nenhuma tarefa encontrada.'); return; }
+
+      this.tasks.import(projectId, tasks).subscribe({
+        next: (created) => {
+          this.tasksList.update((list) => [...list, ...created]);
+          this.toast.success(`${created.length} tarefa(s) importada(s).`);
+          input.value = '';
+        },
+        error: () => this.toast.error('Erro ao importar tarefas.'),
+      });
+    };
+    reader.readAsText(file);
   }
 
   onSearch(): void {

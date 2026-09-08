@@ -134,6 +134,20 @@ public class ProjectTaskController {
         return ResponseEntity.ok(tasks);
     }
 
+    @PostMapping("/projects/{projectId}/import")
+    public ResponseEntity<List<ProjectTaskDTO>> importTasks(
+            @PathVariable Long projectId,
+            @RequestBody List<ProjectTaskRequestDTO> requests,
+            @RequestAttribute("userId") Long userId) {
+        List<ProjectTaskDTO> created = new java.util.ArrayList<>();
+        for (ProjectTaskRequestDTO req : requests) {
+            try {
+                created.add(taskService.createTask(projectId, req, userId));
+            } catch (Exception ignored) {}
+        }
+        return ResponseEntity.ok(created);
+    }
+
     @PatchMapping("/tasks/batch/archive")
     public ResponseEntity<Void> batchArchive(
             @RequestBody List<Long> taskIds,
