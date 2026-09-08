@@ -1903,10 +1903,21 @@
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+  .topbar { flex-wrap: wrap; }
+  .filter-bar .filter-row { flex-wrap: wrap; }
 }
 
 @media (max-width: 768px) {
   .main {
     padding: 1rem;
   }
+  .topbar { flex-direction: column; gap: 0.5rem; }
+  .topbar-left, .topbar-right { width: 100%; }
+  .search-bar { width: 100%; }
+  .bulk-bar { flex-direction: column; align-items: stretch; }
+  .bulk-actions { flex-wrap: wrap; justify-content: center; }
+  .task-labels-row { flex-wrap: wrap; }
+  .task-footer { flex-wrap: wrap; gap: 0.3rem; }
+  .modal-lg { max-width: 100%; margin: 0.5rem; }
+  .filter-bar { padding: 0.6rem; }
 }
