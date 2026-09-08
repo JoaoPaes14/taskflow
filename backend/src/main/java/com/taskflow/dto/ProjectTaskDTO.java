@@ -35,6 +35,8 @@ public class ProjectTaskDTO {
 
     private List<TaskLabelDTO> labels;
 
+    private List<SubtaskDTO> subtasks;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -63,6 +65,12 @@ public class ProjectTaskDTO {
         if (task.getLabels() != null && !task.getLabels().isEmpty()) {
             dto.setLabels(task.getLabels().stream()
                     .map(TaskLabelDTO::fromEntity)
+                    .collect(Collectors.toList()));
+        }
+
+        if (task.getSubtasks() != null && !task.getSubtasks().isEmpty()) {
+            dto.setSubtasks(task.getSubtasks().stream()
+                    .map(SubtaskDTO::fromEntity)
                     .collect(Collectors.toList()));
         }
 

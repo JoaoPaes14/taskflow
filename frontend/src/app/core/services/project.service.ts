@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   Project,
@@ -7,6 +7,7 @@ import {
   ProjectMember,
   ProjectRequest,
 } from '../models/project.model';
+import { PageResponse } from '../models/page.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -16,6 +17,12 @@ export class ProjectService {
 
   getAll(): Observable<Project[]> {
     return this.http.get<Project[]>(this.API);
+  }
+
+  getAllPaged(page: number, size: number): Observable<PageResponse<Project>> {
+    return this.http.get<PageResponse<Project>>(this.API, {
+      params: new HttpParams().set('page', page).set('size', size),
+    });
   }
 
   getById(id: number): Observable<Project> {
@@ -52,6 +59,12 @@ export class ProjectService {
 
   getActivities(id: number): Observable<ProjectActivity[]> {
     return this.http.get<ProjectActivity[]>(`${this.API}/${id}/activities`);
+  }
+
+  getActivitiesPaged(id: number, page: number, size: number): Observable<PageResponse<ProjectActivity>> {
+    return this.http.get<PageResponse<ProjectActivity>>(`${this.API}/${id}/activities`, {
+      params: new HttpParams().set('page', page).set('size', size),
+    });
   }
 
   delete(id: number): Observable<void> {

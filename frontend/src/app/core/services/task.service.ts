@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   ProjectTask,
@@ -8,6 +8,7 @@ import {
   TaskCommentRequest,
   UpdateTaskStatusRequest,
 } from '../models/task.model';
+import { PageResponse } from '../models/page.model';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -17,6 +18,12 @@ export class TaskService {
 
   getTasks(projectId: number): Observable<ProjectTask[]> {
     return this.http.get<ProjectTask[]>(`${this.API}/projects/${projectId}/tasks`);
+  }
+
+  getTasksPaged(projectId: number, page: number, size: number): Observable<PageResponse<ProjectTask>> {
+    return this.http.get<PageResponse<ProjectTask>>(`${this.API}/projects/${projectId}/tasks`, {
+      params: new HttpParams().set('page', page).set('size', size),
+    });
   }
 
   createTask(projectId: number, data: ProjectTaskRequest): Observable<ProjectTask> {
@@ -45,6 +52,12 @@ export class TaskService {
 
   getComments(taskId: number): Observable<TaskComment[]> {
     return this.http.get<TaskComment[]>(`${this.API}/tasks/${taskId}/comments`);
+  }
+
+  getCommentsPaged(taskId: number, page: number, size: number): Observable<PageResponse<TaskComment>> {
+    return this.http.get<PageResponse<TaskComment>>(`${this.API}/tasks/${taskId}/comments`, {
+      params: new HttpParams().set('page', page).set('size', size),
+    });
   }
 
   addComment(taskId: number, data: TaskCommentRequest): Observable<TaskComment> {

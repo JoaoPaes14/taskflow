@@ -6,7 +6,8 @@ import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
-import { LabelService, TaskLabelRequest } from '../../../core/services/label.service';
+import { LabelService } from '../../../core/services/label.service';
+import { SubtaskService, Subtask } from '../../../core/services/subtask.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Project, ProjectActivity, ProjectMember } from '../../../core/models/project.model';
 import {
@@ -35,6 +36,7 @@ export class Board implements OnInit {
   private projects = inject(ProjectService);
   private tasks = inject(TaskService);
   private labels = inject(LabelService);
+  private subtaskApi = inject(SubtaskService);
   private toast = inject(ToastService);
 
   project = signal<Project | null>(null);
@@ -59,6 +61,11 @@ export class Board implements OnInit {
   commentSubmitting = signal(false);
   commentText = '';
 
+  subtasks = signal<Subtask[]>([]);
+  subtasksLoading = signal(false);
+  newSubtaskTitle = '';
+  subtaskSubmitting = signal(false);
+
   activities = signal<ProjectActivity[]>([]);
   showActivity = signal(false);
   activitiesLoading = signal(false);
@@ -70,7 +77,9 @@ export class Board implements OnInit {
   labelSubmitting = signal(false);
 
   filterLabelIds = signal<number[]>([]);
-  showLabelFilter = signal(false);
+  filterAssigneeId = signal<number | null>(null);
+  filterPriority = signal<TaskPriority | null>(null);
+  showFilters = signal(false);
 
   confirmOpen = signal(false);
   confirmTitle = signal('');
@@ -86,12 +95,20 @@ export class Board implements OnInit {
   board = computed(() => {
     const byStatus = new Map<TaskStatus, ProjectTask[]>();
     for (const c of COLUMNS) byStatus.set(c.key, []);
-    const activeFilter = this.filterLabelIds();
+    const labelFilter = this.filterLabelIds();
+    const assigneeFilter = this.filterAssigneeId();
+    const priorityFilter = this.filterPriority();
     for (const t of this.tasksList()) {
-      if (activeFilter.length > 0) {
+      if (labelFilter.length > 0) {
         const taskLabelIds = (t.labels ?? []).map((l) => l.id);
-        const hasAll = activeFilter.every((id) => taskLabelIds.includes(id));
+        const hasAll = labelFilter.every((id) => taskLabelIds.includes(id));
         if (!hasAll) continue;
+      }
+      if (assigneeFilter !== null) {
+        if (t.assigneeId !== assigneeFilter) continue;
+      }
+      if (priorityFilter !== null) {
+        if (t.priority !== priorityFilter) continue;
       }
       const list = byStatus.get(t.status);
       if (list) list.push(t);
@@ -100,6 +117,13 @@ export class Board implements OnInit {
       byStatus.get(c.key)!.sort((a, b) => a.position - b.position);
     }
     return byStatus;
+  });
+
+  totalTasks = computed(() => this.tasksList().length);
+  doneTasks = computed(() => this.tasksList().filter((t) => t.status === 'DONE').length);
+  progressPercent = computed(() => {
+    const total = this.totalTasks();
+    return total === 0 ? 0 : Math.round((this.doneTasks() / total) * 100);
   });
 
   ngOnInit(): void {
@@ -166,6 +190,7 @@ export class Board implements OnInit {
     this.formLabelIds = [];
     this.pendingStatus = status;
     this.comments.set([]);
+    this.subtasks.set([]);
     this.commentText = '';
     this.showModal.set(true);
   }
@@ -183,6 +208,7 @@ export class Board implements OnInit {
     this.pendingStatus = task.status;
     this.showModal.set(true);
     this.loadComments(task.id);
+    this.loadSubtasks(task.id);
   }
 
   loadComments(taskId: number): void {
@@ -198,6 +224,60 @@ export class Board implements OnInit {
         this.commentsLoading.set(false);
         this.toast.error(err.error?.message || 'Erro ao carregar comentarios.');
       },
+    });
+  }
+
+  loadSubtasks(taskId: number): void {
+    this.subtasksLoading.set(true);
+    this.subtaskApi.getSubtasks(taskId).subscribe({
+      next: (list) => {
+        this.subtasks.set(list);
+        this.subtasksLoading.set(false);
+      },
+      error: () => {
+        this.subtasksLoading.set(false);
+      },
+    });
+  }
+
+  addSubtask(): void {
+    const taskId = this.editingId();
+    if (!taskId || !this.newSubtaskTitle.trim() || this.subtaskSubmitting()) return;
+    this.subtaskSubmitting.set(true);
+    this.subtaskApi.createSubtask(taskId, this.newSubtaskTitle.trim()).subscribe({
+      next: (created) => {
+        this.subtasks.update((list) => [...list, created]);
+        this.newSubtaskTitle = '';
+        this.subtaskSubmitting.set(false);
+      },
+      error: (err) => {
+        this.subtaskSubmitting.set(false);
+        this.toast.error(err.error?.message || 'Erro ao criar subtask.');
+      },
+    });
+  }
+
+  toggleSubtask(sub: Subtask): void {
+    const taskId = this.editingId();
+    if (!taskId) return;
+    this.subtaskApi.toggleSubtask(taskId, sub.id).subscribe({
+      next: (updated) => {
+        this.subtasks.update((list) =>
+          list.map((s) => (s.id === updated.id ? updated : s)),
+        );
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar subtask.'),
+    });
+  }
+
+  deleteSubtask(sub: Subtask): void {
+    const taskId = this.editingId();
+    if (!taskId) return;
+    this.subtaskApi.deleteSubtask(taskId, sub.id).subscribe({
+      next: () => {
+        this.subtasks.update((list) => list.filter((s) => s.id !== sub.id));
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao remover subtask.'),
     });
   }
 
@@ -251,6 +331,7 @@ export class Board implements OnInit {
   closeModal(): void {
     this.showModal.set(false);
     this.comments.set([]);
+    this.subtasks.set([]);
     this.commentText = '';
     this.editingId.set(null);
   }
@@ -414,6 +495,24 @@ export class Board implements OnInit {
     return this.formLabelIds.includes(labelId);
   }
 
+  setFilterAssignee(userId: number | null): void {
+    this.filterAssigneeId.set(userId);
+  }
+
+  setFilterPriority(p: TaskPriority | null): void {
+    this.filterPriority.set(p);
+  }
+
+  clearFilters(): void {
+    this.filterLabelIds.set([]);
+    this.filterAssigneeId.set(null);
+    this.filterPriority.set(null);
+  }
+
+  hasActiveFilters(): boolean {
+    return this.filterLabelIds().length > 0 || this.filterAssigneeId() !== null || this.filterPriority() !== null;
+  }
+
   routerBack(): void {
     this.router.navigate(['/dashboard']);
   }
@@ -469,6 +568,12 @@ export class Board implements OnInit {
   isOverdue(task: ProjectTask): boolean {
     if (!task.dueDate || task.status === 'DONE') return false;
     return new Date(task.dueDate) < new Date();
+  }
+
+  subtaskProgress(): number {
+    const list = this.subtasks();
+    if (list.length === 0) return 0;
+    return Math.round((list.filter((s) => s.completed).length / list.length) * 100);
   }
 
   private handleError(err: unknown): void {

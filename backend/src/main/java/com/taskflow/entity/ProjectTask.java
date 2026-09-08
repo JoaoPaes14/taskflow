@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -67,6 +68,11 @@ public class ProjectTask {
     )
     @Builder.Default
     private Set<TaskLabel> labels = new HashSet<>();
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
+    @Builder.Default
+    private List<Subtask> subtasks = List.of();
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

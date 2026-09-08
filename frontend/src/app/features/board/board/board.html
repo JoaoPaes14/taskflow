@@ -9,7 +9,7 @@
         </button>
         <div>
           <h1 class="page-title">{{ project()?.name || 'Projeto' }}</h1>
-          <p class="page-subtitle">Quadro de tarefas</p>
+          <p class="page-subtitle">{{ totalTasks() }} tarefas &middot; {{ progressPercent() }}% concluido</p>
         </div>
       </div>
       <div class="topbar-right">
@@ -22,13 +22,15 @@
             <span class="badge-count">{{ projectLabels().length }}</span>
           }
         </button>
-        <button class="btn-filter" [class.active]="filterLabelIds().length > 0" (click)="showLabelFilter.set(!showLabelFilter())" title="Filtrar por label">
+        <button class="btn-filter" [class.active]="hasActiveFilters()" (click)="showFilters.set(!showFilters())" title="Filtros avancados">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
           </svg>
-          Filtrar
-          @if (filterLabelIds().length > 0) {
-            <span class="badge-count">{{ filterLabelIds().length }}</span>
+          Filtros
+          @if (hasActiveFilters()) {
+            <span class="badge-count">
+              {{ filterLabelIds().length + (filterAssigneeId() !== null ? 1 : 0) + (filterPriority() !== null ? 1 : 0) }}
+            </span>
           }
         </button>
         <button class="btn-activity" (click)="toggleActivity()">
@@ -38,22 +40,46 @@
       </div>
     </header>
 
-    @if (showLabelFilter() && projectLabels().length > 0) {
-      <div class="label-filter-bar">
-        <span class="filter-label-text">Filtrar por label:</span>
-        @for (label of projectLabels(); track label.id) {
+    @if (showFilters()) {
+      <div class="filter-bar">
+        <div class="filter-section">
+          <span class="filter-label-text">Label:</span>
+          @for (label of projectLabels(); track label.id) {
+            <button
+              class="label-chip"
+              [class.active]="isLabelFiltered(label.id)"
+              [style.--chip-color]="label.color"
+              (click)="toggleLabelFilter(label.id)"
+            >
+              <span class="chip-dot" [style.background]="label.color"></span>
+              {{ label.name }}
+            </button>
+          }
+        </div>
+        <div class="filter-section">
+          <span class="filter-label-text">Responsavel:</span>
           <button
-            class="label-chip"
-            [class.active]="isLabelFiltered(label.id)"
-            [style.--chip-color]="label.color"
-            (click)="toggleLabelFilter(label.id)"
-          >
-            <span class="chip-dot" [style.background]="label.color"></span>
-            {{ label.name }}
-          </button>
-        }
-        @if (filterLabelIds().length > 0) {
-          <button class="clear-filter" (click)="filterLabelIds.set([])">Limpar</button>
+            class="filter-chip"
+            [class.active]="filterAssigneeId() === null"
+            (click)="setFilterAssignee(null)"
+          >Todos</button>
+          @for (m of members(); track m.userId) {
+            <button
+              class="filter-chip"
+              [class.active]="filterAssigneeId() === m.userId"
+              (click)="setFilterAssignee(m.userId)"
+            >{{ m.name }}</button>
+          }
+        </div>
+        <div class="filter-section">
+          <span class="filter-label-text">Prioridade:</span>
+          <button class="filter-chip" [class.active]="filterPriority() === null" (click)="setFilterPriority(null)">Todas</button>
+          <button class="filter-chip" [class.active]="filterPriority() === 'LOW'" (click)="setFilterPriority('LOW')">Baixa</button>
+          <button class="filter-chip" [class.active]="filterPriority() === 'MEDIUM'" (click)="setFilterPriority('MEDIUM')">Media</button>
+          <button class="filter-chip" [class.active]="filterPriority() === 'HIGH'" (click)="setFilterPriority('HIGH')">Alta</button>
+        </div>
+        @if (hasActiveFilters()) {
+          <button class="clear-filter" (click)="clearFilters()">Limpar filtros</button>
         }
       </div>
     }
@@ -121,6 +147,13 @@
                     <p class="task-desc">{{ task.description }}</p>
                   }
 
+                  @if (task.subtasks && task.subtasks.length > 0) {
+                    <div class="task-subtasks-mini">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                      {{ task.subtasks.filter(s => s.completed).length }}/{{ task.subtasks.length }}
+                    </div>
+                  }
+
                   <div class="task-meta">
                     @if (task.assigneeName) {
                       <span class="assignee" [title]="task.assigneeName">
@@ -180,7 +213,7 @@
 
 @if (showModal() && project()) {
   <div class="modal-overlay" (click)="closeModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ isEditing() ? 'Editar tarefa' : 'Nova tarefa' }}</h2>
         <button class="modal-close" (click)="closeModal()">&times;</button>
@@ -236,6 +269,52 @@
             </div>
           </div>
         }
+
+        @if (isEditing()) {
+          <div class="subtasks-section">
+            <h3 class="section-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              Subtarefas ({{ subtasks().filter(s => s.completed).length }}/{{ subtasks().length }})
+            </h3>
+            @if (subtasks().length > 0) {
+              <div class="subtask-progress-bar">
+                <div class="subtask-progress-fill" [style.width.%]="subtaskProgress()"></div>
+              </div>
+            }
+            @if (subtasksLoading()) {
+              <p class="section-empty">Carregando...</p>
+            } @else {
+              <div class="subtasks-list">
+                @for (sub of subtasks(); track sub.id) {
+                  <div class="subtask-item" [class.completed]="sub.completed">
+                    <button type="button" class="subtask-check" (click)="toggleSubtask(sub)">
+                      @if (sub.completed) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      }
+                    </button>
+                    <span class="subtask-title">{{ sub.title }}</span>
+                    <button type="button" class="subtask-delete" (click)="deleteSubtask(sub)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </div>
+                }
+              </div>
+              <form (ngSubmit)="addSubtask()" class="subtask-form">
+                <input
+                  type="text"
+                  [(ngModel)]="newSubtaskTitle"
+                  name="newSubtask"
+                  placeholder="Nova subtarefa..."
+                  class="subtask-input"
+                />
+                <button type="submit" class="btn-primary btn-xs" [disabled]="!newSubtaskTitle.trim() || subtaskSubmitting()">
+                  {{ subtaskSubmitting() ? '...' : 'Adicionar' }}
+                </button>
+              </form>
+            }
+          </div>
+        }
+
         <div class="modal-actions">
           <button type="button" class="btn-secondary" [disabled]="submitting()" (click)="closeModal()">Cancelar</button>
           <button type="submit" class="btn-primary" [disabled]="submitting()">
@@ -245,9 +324,9 @@
 
         @if (isEditing()) {
           <div class="comments-section">
-            <h3 class="comments-title">Comentarios ({{ comments().length }})</h3>
+            <h3 class="section-title">Comentarios ({{ comments().length }})</h3>
             @if (commentsLoading()) {
-              <p class="comments-empty">Carregando comentarios...</p>
+              <p class="section-empty">Carregando comentarios...</p>
             } @else {
               <div class="comments-list">
                 @for (c of comments(); track c.id) {
@@ -262,7 +341,7 @@
                     </div>
                   </div>
                 } @empty {
-                  <p class="comments-empty">Nenhum comentario ainda. Seja o primeiro!</p>
+                  <p class="section-empty">Nenhum comentario ainda.</p>
                 }
               </div>
             }
@@ -299,7 +378,7 @@
       </div>
       <div class="activity-list">
         @if (activitiesLoading()) {
-          <p class="activity-empty">Carregando atividades...</p>
+          <p class="section-empty">Carregando atividades...</p>
         } @else {
           @for (a of activities(); track a.id) {
             <div class="activity-item">
@@ -310,7 +389,7 @@
               </div>
             </div>
           } @empty {
-            <p class="activity-empty">Nenhuma atividade registrada ainda.</p>
+            <p class="section-empty">Nenhuma atividade registrada ainda.</p>
           }
         }
       </div>
@@ -360,7 +439,7 @@
             </button>
           </div>
         } @empty {
-          <p class="labels-empty">Nenhuma label criada ainda.</p>
+          <p class="section-empty">Nenhuma label criada ainda.</p>
         }
       </div>
     </div>

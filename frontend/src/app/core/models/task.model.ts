@@ -8,6 +8,15 @@ export interface TaskLabel {
   color: string;
 }
 
+export interface Subtask {
+  id: number;
+  taskId: number;
+  title: string;
+  completed: boolean;
+  position: number;
+  createdAt: string;
+}
+
 export interface ProjectTask {
   id: number;
   projectId: number;
@@ -23,6 +32,7 @@ export interface ProjectTask {
   createdById: number;
   createdByName: string;
   labels?: TaskLabel[];
+  subtasks?: Subtask[];
   createdAt: string;
   updatedAt: string;
 }

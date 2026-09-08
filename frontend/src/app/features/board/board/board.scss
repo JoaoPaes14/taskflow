@@ -764,101 +764,316 @@
   margin-top: 1.5rem;
   border-top: 1px solid var(--border);
   padding-top: 1.25rem;
+}
 
-  .comments-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin: 0 0 0.75rem;
+.subtasks-section {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text);
+}
+
+.section-empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin: 0.5rem 0;
+}
+
+.modal-lg {
+  max-width: 560px;
+}
+
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.25rem;
+  animation: fadeIn 0.2s ease;
+
+  .filter-section {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
   }
 
-  .comments-empty {
+  .filter-label-text {
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--text-muted);
+    margin-right: 0.15rem;
+    min-width: 80px;
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      border-color: var(--primary-light);
+    }
+
+    &.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 600;
+    }
+  }
+
+  .clear-filter {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--danger);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    align-self: flex-start;
+
+    &:hover {
+      background: var(--danger-soft);
+    }
+  }
+}
+
+.task-subtasks-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+  padding: 0.15rem 0.4rem;
+  background: var(--bg);
+  border-radius: 4px;
+}
+
+.subtask-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+
+  .subtask-progress-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+}
+
+.subtasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--bg);
+  }
+
+  &.completed .subtask-title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+
+  .subtask-check {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    color: var(--success);
+
+    &:hover {
+      border-color: var(--success);
+    }
+  }
+
+  &.completed .subtask-check {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+  }
+
+  .subtask-title {
+    flex: 1;
     font-size: 0.82rem;
-    margin: 0.5rem 0;
+    font-weight: 500;
   }
 
-  .comments-list {
+  .subtask-delete {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    max-height: 220px;
-    overflow-y: auto;
-    margin-bottom: 1rem;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
   }
 
-  .comment-item {
-    display: flex;
-    gap: 0.6rem;
+  &:hover .subtask-delete {
+    opacity: 1;
+  }
+}
 
-    .comment-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: white;
+.subtask-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  .subtask-input {
+    flex: 1;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.82rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+  }
+}
+
+.btn-xs {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.comment-item {
+  display: flex;
+  gap: 0.6rem;
+
+  .comment-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .comment-body {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+    flex: 1;
+
+    .comment-head {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 0.68rem;
-      font-weight: 700;
-      flex-shrink: 0;
+      gap: 0.5rem;
+      margin-bottom: 0.15rem;
+
+      strong { font-size: 0.78rem; }
+
+      .comment-date {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+      }
     }
 
-    .comment-body {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.55rem 0.75rem;
-      flex: 1;
+    p {
+      margin: 0;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  }
+}
 
-      .comment-head {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.15rem;
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 
-        strong {
-          font-size: 0.78rem;
-        }
+  textarea {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.6rem 0.8rem;
+    resize: vertical;
 
-        .comment-date {
-          font-size: 0.68rem;
-          color: var(--text-muted);
-        }
-      }
-
-      p {
-        margin: 0;
-        font-size: 0.8rem;
-        line-height: 1.45;
-        white-space: pre-wrap;
-        word-break: break-word;
-      }
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
     }
   }
 
-  .comment-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    textarea {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.6rem 0.8rem;
-      resize: vertical;
-
-      &:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-      }
-    }
-
-    button {
-      align-self: flex-end;
-    }
-  }
+  button { align-self: flex-end; }
 }
 
 .activity-list {
@@ -867,13 +1082,6 @@
   gap: 0.75rem;
   max-height: 420px;
   overflow-y: auto;
-
-  .activity-empty {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    text-align: center;
-    padding: 1rem 0;
-  }
 
   .activity-item {
     display: flex;
@@ -916,9 +1124,7 @@
   margin: -0.5rem 0 1rem;
 }
 
-.label-form {
-  margin-bottom: 1rem;
-}
+.label-form { margin-bottom: 1rem; }
 
 .label-form-row {
   display: flex;
@@ -967,9 +1173,7 @@
     border-radius: 10px;
     transition: all 0.15s ease;
 
-    &:hover {
-      border-color: var(--primary-light);
-    }
+    &:hover { border-color: var(--primary-light); }
 
     .label-dot {
       width: 12px;
@@ -1008,13 +1212,6 @@
         color: var(--danger);
       }
     }
-  }
-
-  .labels-empty {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    padding: 1.5rem 0;
   }
 }
 
