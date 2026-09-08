@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,6 +8,7 @@ import { ProjectService } from '../../../core/services/project.service';
 import { TaskService } from '../../../core/services/task.service';
 import { LabelService } from '../../../core/services/label.service';
 import { SubtaskService, Subtask } from '../../../core/services/subtask.service';
+import { AttachmentService } from '../../../core/services/attachment.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Project, ProjectActivity, ProjectMember } from '../../../core/models/project.model';
 import {
@@ -16,6 +17,7 @@ import {
   TaskLabel,
   TaskPriority,
   TaskStatus,
+  Attachment,
 } from '../../../core/models/task.model';
 
 const COLUMNS: { key: TaskStatus; label: string }[] = [
@@ -37,6 +39,7 @@ export class Board implements OnInit {
   private tasks = inject(TaskService);
   private labels = inject(LabelService);
   private subtaskApi = inject(SubtaskService);
+  private attachmentApi = inject(AttachmentService);
   private toast = inject(ToastService);
 
   project = signal<Project | null>(null);
@@ -65,6 +68,10 @@ export class Board implements OnInit {
   subtasksLoading = signal(false);
   newSubtaskTitle = '';
   subtaskSubmitting = signal(false);
+
+  attachments = signal<Attachment[]>([]);
+  attachmentsLoading = signal(false);
+  attachmentSubmitting = signal(false);
 
   activities = signal<ProjectActivity[]>([]);
   showActivity = signal(false);
@@ -209,6 +216,7 @@ export class Board implements OnInit {
     this.showModal.set(true);
     this.loadComments(task.id);
     this.loadSubtasks(task.id);
+    this.loadAttachments(task.id);
   }
 
   loadComments(taskId: number): void {
@@ -281,6 +289,67 @@ export class Board implements OnInit {
     });
   }
 
+  loadAttachments(taskId: number): void {
+    this.attachmentsLoading.set(true);
+    this.attachmentApi.getAttachments(taskId).subscribe({
+      next: (list) => {
+        this.attachments.set(list);
+        this.attachmentsLoading.set(false);
+      },
+      error: () => {
+        this.attachmentsLoading.set(false);
+      },
+    });
+  }
+
+  uploadAttachment(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files?.[0];
+    if (!file) return;
+    const taskId = this.editingId();
+    if (!taskId) return;
+    this.attachmentSubmitting.set(true);
+    this.attachmentApi.upload(taskId, file).subscribe({
+      next: (created) => {
+        this.attachments.update((list) => [created, ...list]);
+        this.attachmentSubmitting.set(false);
+        input.value = '';
+      },
+      error: (err) => {
+        this.attachmentSubmitting.set(false);
+        this.toast.error(err.error?.message || 'Erro ao enviar arquivo.');
+      },
+    });
+  }
+
+  deleteAttachment(attachment: Attachment): void {
+    this.attachmentApi.delete(attachment.id).subscribe({
+      next: () => {
+        this.attachments.update((list) => list.filter((a) => a.id !== attachment.id));
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao remover arquivo.'),
+    });
+  }
+
+  downloadAttachment(attachment: Attachment): void {
+    window.open(this.attachmentApi.getDownloadUrl(attachment.id), '_blank');
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  getFileIcon(contentType: string): string {
+    if (contentType.startsWith('image/')) return 'image';
+    if (contentType === 'application/pdf') return 'pdf';
+    if (contentType.includes('word') || contentType.includes('document')) return 'doc';
+    if (contentType.includes('excel') || contentType.includes('sheet')) return 'xls';
+    if (contentType === 'text/plain' || contentType === 'text/csv') return 'txt';
+    return 'file';
+  }
+
   submitComment(): void {
     if (this.commentSubmitting()) return;
     const taskId = this.editingId();
@@ -332,6 +401,7 @@ export class Board implements OnInit {
     this.showModal.set(false);
     this.comments.set([]);
     this.subtasks.set([]);
+    this.attachments.set([]);
     this.commentText = '';
     this.editingId.set(null);
   }

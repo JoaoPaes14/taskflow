@@ -64,3 +64,15 @@ export interface TaskComment {
 export interface TaskCommentRequest {
   content: string;
 }
+
+export interface Attachment {
+  id: number;
+  taskId: number;
+  filename: string;
+  originalFilename: string;
+  contentType: string;
+  fileSize: number;
+  uploadedById: number;
+  uploadedByName: string;
+  createdAt: string;
+}

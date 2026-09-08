@@ -32,6 +32,9 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       JWT_SECRET: ${JWT_SECRET:-mude-esta-chave-para-uma-chave-segura-em-producao-mude-mude-mude}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      UPLOAD_DIR: /app-data/uploads
+    volumes:
+      - taskflow-uploads:/app-data/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -53,6 +56,7 @@ services:
 
 volumes:
   taskflow-mysql-data:
+  taskflow-uploads:
 
 networks:
   taskflow-network:

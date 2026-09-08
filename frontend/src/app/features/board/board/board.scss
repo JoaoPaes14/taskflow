@@ -1215,6 +1215,149 @@
   }
 }
 
+.attachments-section {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+
+  .attachments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: var(--bg);
+
+      .attachment-delete {
+        opacity: 1;
+      }
+    }
+  }
+
+  .attachment-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--bg);
+    color: var(--text-muted);
+
+    &[data-type="image"] {
+      background: #ede9fe;
+      color: #7c3aed;
+    }
+    &[data-type="pdf"] {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    &[data-type="doc"] {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+    &[data-type="xls"] {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+  }
+
+  .attachment-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+
+    .attachment-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .attachment-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+  }
+
+  .attachment-delete {
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+  }
+}
+
+.attachment-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    &.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+
+  .upload-hint {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
