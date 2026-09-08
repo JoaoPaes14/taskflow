@@ -4,6 +4,7 @@ import { TitleCasePipe, DatePipe } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { ConfirmModalComponent } from '../confirm-modal/confirm-modal';
 import { Notification } from '../../../core/models/notification.model';
 
@@ -18,6 +19,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   notificationApi = inject(NotificationService);
   private ws = inject(WebSocketService);
+  theme = inject(ThemeService);
 
   user = this.auth.currentUser;
   collapsed = signal(false);

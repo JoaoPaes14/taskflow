@@ -34,6 +34,13 @@
       padding-right: 0;
     }
 
+    .theme-toggle .theme-btn {
+      justify-content: center;
+      padding-left: 0;
+      padding-right: 0;
+      span { display: none; }
+    }
+
     .user-area {
       justify-content: center;
       flex-direction: column;
@@ -165,6 +172,30 @@
     border-top: 1px solid var(--border);
     padding-top: 0.75rem;
     margin-top: 0.5rem;
+
+    .theme-toggle {
+      margin-bottom: 0.5rem;
+
+      .theme-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 0.65rem;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 0.82rem;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background: var(--bg);
+          color: var(--text);
+        }
+      }
+    }
   }
 
   .notification-area {
