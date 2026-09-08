@@ -33,6 +33,10 @@ public class User{
     @Column(nullable = false)
     private Role role;
 
+    @Column(name = "email_notifications", nullable = false)
+    @Builder.Default
+    private Boolean emailNotifications = true;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 

@@ -22,4 +22,6 @@ public class UpdateProfileRequestDTO {
 
     @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
     private String password;
+
+    private Boolean emailNotifications;
 }

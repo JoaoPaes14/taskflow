@@ -28,6 +28,17 @@ import { ToastService } from '../../core/services/toast.service';
               <label for="profile-password">Nova senha (opcional)</label>
               <input id="profile-password" type="password" [(ngModel)]="password" placeholder="Deixe em branco para manter" />
             </div>
+            <div class="form-group toggle-row">
+              <label for="profile-email-notif">Notificacoes por email</label>
+              <button
+                type="button"
+                class="toggle-btn"
+                [class.active]="emailNotifications"
+                (click)="emailNotifications = !emailNotifications"
+              >
+                <span class="toggle-knob"></span>
+              </button>
+            </div>
           </div>
           <div class="modal-footer">
             <button class="btn-secondary" (click)="close.emit()">Cancelar</button>
@@ -88,6 +99,22 @@ import { ToastService } from '../../core/services/toast.service';
       &:hover { background: var(--primary-dark); }
       &:disabled { opacity: 0.5; cursor: not-allowed; }
     }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      label { margin-bottom: 0; }
+    }
+    .toggle-btn {
+      width: 40px; height: 22px; border-radius: 11px; border: none;
+      background: var(--border); cursor: pointer; position: relative;
+      transition: background 0.2s;
+      &.active { background: var(--primary); }
+      .toggle-knob {
+        width: 18px; height: 18px; border-radius: 50%; background: white;
+        position: absolute; top: 2px; left: 2px; transition: transform 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+      &.active .toggle-knob { transform: translateX(18px); }
+    }
     @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
   `]
 })
@@ -101,6 +128,7 @@ export class ProfileModalComponent implements OnInit {
   name = '';
   email = '';
   password = '';
+  emailNotifications = true;
   submitting = signal(false);
 
   ngOnInit(): void {
@@ -117,9 +145,10 @@ export class ProfileModalComponent implements OnInit {
       return;
     }
     this.submitting.set(true);
-    const data: { name: string; email: string; password?: string } = {
+    const data: { name: string; email: string; password?: string; emailNotifications?: boolean } = {
       name: this.name.trim(),
       email: this.email.trim(),
+      emailNotifications: this.emailNotifications,
     };
     if (this.password.trim()) {
       data.password = this.password.trim();

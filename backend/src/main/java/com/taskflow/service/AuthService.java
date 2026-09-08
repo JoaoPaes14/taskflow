@@ -94,6 +94,9 @@ public class AuthService {
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
+        if (request.getEmailNotifications() != null) {
+            user.setEmailNotifications(request.getEmailNotifications());
+        }
         userRepository.save(user);
 
         return AuthResponseDTO.builder()
