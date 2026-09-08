@@ -1,6 +1,7 @@
 package com.taskflow.controller;
 
 import com.taskflow.dto.PageResponseDTO;
+import com.taskflow.dto.ProjectStatsDTO;
 import com.taskflow.dto.ProjectTaskDTO;
 import com.taskflow.dto.ProjectTaskRequestDTO;
 import com.taskflow.dto.UpdateTaskStatusDTO;
@@ -32,6 +33,13 @@ public class ProjectTaskController {
         }
         List<ProjectTaskDTO> tasks = taskService.getTasks(projectId, userId);
         return ResponseEntity.ok(tasks);
+    }
+
+    @GetMapping("/projects/{projectId}/stats")
+    public ResponseEntity<ProjectStatsDTO> getStats(
+            @PathVariable Long projectId,
+            @RequestAttribute("userId") Long userId) {
+        return ResponseEntity.ok(taskService.getStats(projectId, userId));
     }
 
     @PostMapping("/projects/{projectId}/tasks")

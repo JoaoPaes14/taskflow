@@ -25,4 +25,12 @@ public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> 
             @Param("status") ProjectTask.TaskStatus status);
 
     long countByProjectIdAndStatusAndArchived(Long projectId, ProjectTask.TaskStatus status, boolean archived);
+
+    long countByProjectIdAndArchived(Long projectId, boolean archived);
+
+    @Query("SELECT t.assignee.name, COUNT(t) FROM ProjectTask t WHERE t.project.id = :projectId AND t.archived = false AND t.assignee IS NOT NULL GROUP BY t.assignee.name")
+    List<Object[]> countByAssignee(@Param("projectId") Long projectId);
+
+    @Query("SELECT CAST(t.priority AS string), COUNT(t) FROM ProjectTask t WHERE t.project.id = :projectId AND t.archived = false GROUP BY t.priority")
+    List<Object[]> countByPriority(@Param("projectId") Long projectId);
 }

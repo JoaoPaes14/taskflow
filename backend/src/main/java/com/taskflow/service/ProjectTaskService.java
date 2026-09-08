@@ -1,6 +1,7 @@
 package com.taskflow.service;
 
 import com.taskflow.dto.PageResponseDTO;
+import com.taskflow.dto.ProjectStatsDTO;
 import com.taskflow.dto.ProjectTaskDTO;
 import com.taskflow.dto.ProjectTaskRequestDTO;
 import com.taskflow.dto.UpdateTaskStatusDTO;
@@ -20,13 +21,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -51,6 +55,37 @@ public class ProjectTaskService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "projectStats", key = "#projectId")
+    public ProjectStatsDTO getStats(Long projectId, Long userId) {
+        requireAccess(projectId, userId);
+
+        long total = taskRepository.countByProjectIdAndArchived(projectId, false);
+        long todo = taskRepository.countByProjectIdAndStatusAndArchived(projectId, ProjectTask.TaskStatus.TODO, false);
+        long inProgress = taskRepository.countByProjectIdAndStatusAndArchived(projectId, ProjectTask.TaskStatus.IN_PROGRESS, false);
+        long done = taskRepository.countByProjectIdAndStatusAndArchived(projectId, ProjectTask.TaskStatus.DONE, false);
+        long archived = taskRepository.countByProjectIdAndArchived(projectId, true);
+
+        Map<String, Long> byAssignee = new HashMap<>();
+        for (Object[] row : taskRepository.countByAssignee(projectId)) {
+            byAssignee.put((String) row[0], (Long) row[1]);
+        }
+
+        Map<String, Long> byPriority = new HashMap<>();
+        for (Object[] row : taskRepository.countByPriority(projectId)) {
+            byPriority.put((String) row[0], (Long) row[1]);
+        }
+
+        return ProjectStatsDTO.builder()
+                .totalTasks(total)
+                .todoTasks(todo)
+                .inProgressTasks(inProgress)
+                .doneTasks(done)
+                .archivedTasks(archived)
+                .tasksByAssignee(byAssignee)
+                .tasksByPriority(byPriority)
+                .build();
+    }
+
     public PageResponseDTO<ProjectTaskDTO> getTasksPaged(Long projectId, Long userId, int page, int size) {
         requireAccess(projectId, userId);
         Pageable pageable = PageRequest.of(page, size);
@@ -61,7 +96,10 @@ public class ProjectTaskService {
         return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
-    @CacheEvict(value = "tasks", key = "#projectId")
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", key = "#projectId"),
+        @CacheEvict(value = "projectStats", key = "#projectId")
+    })
     public ProjectTaskDTO createTask(Long projectId, ProjectTaskRequestDTO request, Long userId) {
         requireAccess(projectId, userId);
 
@@ -104,7 +142,10 @@ public class ProjectTaskService {
         return ProjectTaskDTO.fromEntity(saved);
     }
 
-    @CacheEvict(value = "tasks", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
     public ProjectTaskDTO updateTask(Long taskId, ProjectTaskRequestDTO request, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -147,7 +188,10 @@ public class ProjectTaskService {
         return ProjectTaskDTO.fromEntity(saved);
     }
 
-    @CacheEvict(value = "tasks", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
     public ProjectTaskDTO updateTaskStatus(Long taskId, UpdateTaskStatusDTO request, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -182,7 +226,10 @@ public class ProjectTaskService {
         return ProjectTaskDTO.fromEntity(saved);
     }
 
-    @CacheEvict(value = "tasks", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
     public void archiveTask(Long taskId, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -191,7 +238,10 @@ public class ProjectTaskService {
         renormalizeColumn(task.getProject().getId(), task.getStatus());
     }
 
-    @CacheEvict(value = "tasks", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
     public void restoreTask(Long taskId, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);
@@ -201,7 +251,10 @@ public class ProjectTaskService {
         taskRepository.save(task);
     }
 
-    @CacheEvict(value = "tasks", allEntries = true)
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
     public void deleteTask(Long taskId, Long userId) {
         ProjectTask task = getOwnedTask(taskId);
         requireAccess(task.getProject().getId(), userId);

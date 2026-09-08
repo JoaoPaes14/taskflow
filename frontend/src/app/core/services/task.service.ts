@@ -10,6 +10,16 @@ import {
 } from '../models/task.model';
 import { PageResponse } from '../models/page.model';
 
+export interface ProjectStats {
+  totalTasks: number;
+  todoTasks: number;
+  inProgressTasks: number;
+  doneTasks: number;
+  archivedTasks: number;
+  tasksByAssignee: Record<string, number>;
+  tasksByPriority: Record<string, number>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TaskService {
   private readonly API = '/api';
@@ -48,6 +58,10 @@ export class TaskService {
 
   restoreTask(taskId: number): Observable<void> {
     return this.http.patch<void>(`${this.API}/tasks/${taskId}/restore`, {});
+  }
+
+  getStats(projectId: number): Observable<ProjectStats> {
+    return this.http.get<ProjectStats>(`${this.API}/projects/${projectId}/stats`);
   }
 
   getComments(taskId: number): Observable<TaskComment[]> {
