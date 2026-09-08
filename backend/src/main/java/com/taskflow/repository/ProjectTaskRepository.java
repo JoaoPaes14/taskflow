@@ -40,4 +40,7 @@ public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> 
 
     @Query("SELECT t FROM ProjectTask t JOIN FETCH t.assignee JOIN FETCH t.project WHERE t.archived = false AND t.status <> 'DONE' AND t.dueDate BETWEEN :start AND :end")
     List<ProjectTask> findTasksDueBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Query(value = "SELECT * FROM project_tasks t WHERE t.project_id = :projectId AND t.archived = false AND MATCH(t.title, t.description) AGAINST (:query IN NATURAL LANGUAGE MODE) ORDER BY t.position ASC", nativeQuery = true)
+    List<ProjectTask> searchByFullText(@Param("projectId") Long projectId, @Param("query") String query);
 }

@@ -86,6 +86,13 @@ public class ProjectTaskService {
                 .build();
     }
 
+    public List<ProjectTaskDTO> searchTasks(Long projectId, String query, Long userId) {
+        requireAccess(projectId, userId);
+        return taskRepository.searchByFullText(projectId, query).stream()
+                .map(ProjectTaskDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     public PageResponseDTO<ProjectTaskDTO> getTasksPaged(Long projectId, Long userId, int page, int size) {
         requireAccess(projectId, userId);
         Pageable pageable = PageRequest.of(page, size);

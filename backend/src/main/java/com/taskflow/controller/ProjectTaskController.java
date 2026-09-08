@@ -42,6 +42,14 @@ public class ProjectTaskController {
         return ResponseEntity.ok(taskService.getStats(projectId, userId));
     }
 
+    @GetMapping("/projects/{projectId}/search")
+    public ResponseEntity<List<ProjectTaskDTO>> search(
+            @PathVariable Long projectId,
+            @RequestParam String q,
+            @RequestAttribute("userId") Long userId) {
+        return ResponseEntity.ok(taskService.searchTasks(projectId, q, userId));
+    }
+
     @PostMapping("/projects/{projectId}/tasks")
     public ResponseEntity<ProjectTaskDTO> createTask(
             @PathVariable Long projectId,

@@ -13,6 +13,23 @@
         </div>
       </div>
       <div class="topbar-right">
+        <div class="search-bar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar tarefas..."
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            (input)="!searchQuery ? clearSearch() : null"
+          />
+          @if (searchQuery) {
+            <button class="search-clear" (click)="clearSearch()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          }
+        </div>
         <button class="btn-stats" [class.active]="showStats()" (click)="toggleStats()" title="Estatisticas">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
@@ -99,6 +116,26 @@
         <div class="spinner"></div>
         <p>Carregando tarefas...</p>
       </div>
+    } @else if (searchResults() !== null) {
+      <section class="search-results">
+        <div class="search-header">
+          <h2>Resultados da busca ({{ searchResults()!.length }})</h2>
+          <button class="btn-clear-search" (click)="clearSearch()">Limpar busca</button>
+        </div>
+        @if (searchResults()!.length === 0) {
+          <p class="search-empty">Nenhuma tarefa encontrada.</p>
+        } @else {
+          <div class="search-list">
+            @for (task of searchResults()!; track task.id) {
+              <div class="search-item" (click)="openEdit(task)">
+                <span class="search-status" [class]="'status-' + task.status.toLowerCase()"></span>
+                <span class="search-title">{{ task.title }}</span>
+                <span class="search-status-label">{{ task.status }}</span>
+              </div>
+            }
+          </div>
+        }
+      </section>
     } @else {
       <section class="board">
         @for (col of columns; track col.key; let colIndex = $index) {

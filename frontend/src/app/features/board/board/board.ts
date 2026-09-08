@@ -93,6 +93,8 @@ export class Board implements OnInit {
   filterAssigneeId = signal<number | null>(null);
   filterPriority = signal<TaskPriority | null>(null);
   showFilters = signal(false);
+  searchQuery = '';
+  searchResults = signal<ProjectTask[] | null>(null);
 
   confirmOpen = signal(false);
   confirmTitle = signal('');
@@ -193,6 +195,25 @@ export class Board implements OnInit {
 
   toggleStats(): void {
     this.showStats.set(!this.showStats());
+  }
+
+  onSearch(): void {
+    const q = this.searchQuery.trim();
+    if (!q) {
+      this.searchResults.set(null);
+      return;
+    }
+    const projectId = this.project()?.id;
+    if (!projectId) return;
+    this.tasks.search(projectId, q).subscribe({
+      next: (results) => this.searchResults.set(results),
+      error: () => this.searchResults.set([]),
+    });
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.searchResults.set(null);
   }
 
   getTasks(status: TaskStatus): ProjectTask[] {

@@ -64,6 +64,12 @@ export class TaskService {
     return this.http.get<ProjectStats>(`${this.API}/projects/${projectId}/stats`);
   }
 
+  search(projectId: number, query: string): Observable<ProjectTask[]> {
+    return this.http.get<ProjectTask[]>(`${this.API}/projects/${projectId}/search`, {
+      params: { q: query }
+    });
+  }
+
   getComments(taskId: number): Observable<TaskComment[]> {
     return this.http.get<TaskComment[]>(`${this.API}/tasks/${taskId}/comments`);
   }
