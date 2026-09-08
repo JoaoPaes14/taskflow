@@ -12,6 +12,7 @@ import { LabelService } from '../../../core/services/label.service';
 import { SubtaskService, Subtask } from '../../../core/services/subtask.service';
 import { AttachmentService } from '../../../core/services/attachment.service';
 import { WebSocketService } from '../../../core/services/websocket.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Project, ProjectActivity, ProjectMember } from '../../../core/models/project.model';
 import {
@@ -45,6 +46,7 @@ export class Board implements OnInit, OnDestroy {
   private subtaskApi = inject(SubtaskService);
   private attachmentApi = inject(AttachmentService);
   private ws = inject(WebSocketService);
+  private auth = inject(AuthService);
   private toast = inject(ToastService);
   private currentCommentTaskId: number | null = null;
 
@@ -100,6 +102,10 @@ export class Board implements OnInit, OnDestroy {
   filterLabelIds = signal<number[]>([]);
   filterAssigneeId = signal<number | null>(null);
   filterPriority = signal<TaskPriority | null>(null);
+
+  editingCommentId = signal<number | null>(null);
+  editingCommentContent = '';
+  showMemberModal = signal(false);
   showFilters = signal(false);
   searchQuery = '';
   searchResults = signal<ProjectTask[] | null>(null);
@@ -261,10 +267,26 @@ export class Board implements OnInit, OnDestroy {
       this.ws.unsubscribeFromTaskComments(this.currentCommentTaskId);
     }
     this.currentCommentTaskId = taskId;
-    this.ws.subscribeToTaskComments(taskId, (comment) => {
-      const current = this.comments();
-      if (!current.some((c) => c.id === comment.id)) {
-        this.comments.update((list) => [...list, comment]);
+    this.ws.subscribeToTaskComments(taskId, (event: any) => {
+      if (event.event) {
+        switch (event.event) {
+          case 'COMMENT_UPDATED':
+            this.comments.update((list) =>
+              list.map((c) => (c.id === event.data.id ? event.data : c))
+            );
+            break;
+          case 'COMMENT_DELETED':
+            this.comments.update((list) =>
+              list.filter((c) => c.id !== event.data.commentId)
+            );
+            break;
+        }
+      } else {
+        const comment: TaskComment = event;
+        const current = this.comments();
+        if (!current.some((c) => c.id === comment.id)) {
+          this.comments.update((list) => [...list, comment]);
+        }
       }
     });
   }
@@ -555,6 +577,44 @@ export class Board implements OnInit, OnDestroy {
         this.toast.error(err.error?.message || 'Erro ao enviar comentario.');
       },
     });
+  }
+
+  startEditComment(comment: TaskComment): void {
+    this.editingCommentId.set(comment.id);
+    this.editingCommentContent = comment.content;
+  }
+
+  cancelEditComment(): void {
+    this.editingCommentId.set(null);
+    this.editingCommentContent = '';
+  }
+
+  saveEditComment(taskId: number, commentId: number): void {
+    if (!this.editingCommentContent.trim()) return;
+    this.tasks.updateComment(taskId, commentId, { content: this.editingCommentContent.trim() }).subscribe({
+      next: (updated) => {
+        this.comments.update((list) => list.map((c) => (c.id === commentId ? updated : c)));
+        this.editingCommentId.set(null);
+        this.editingCommentContent = '';
+        this.toast.success('Comentario atualizado.');
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar comentario.'),
+    });
+  }
+
+  deleteComment(taskId: number, commentId: number): void {
+    this.tasks.deleteComment(taskId, commentId).subscribe({
+      next: () => {
+        this.comments.update((list) => list.filter((c) => c.id !== commentId));
+        this.toast.success('Comentario excluido.');
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir comentario.'),
+    });
+  }
+
+  isOwnComment(comment: TaskComment): boolean {
+    const user = this.auth.currentUser();
+    return user !== null && comment.authorId === user.userId;
   }
 
   toggleActivity(): void {

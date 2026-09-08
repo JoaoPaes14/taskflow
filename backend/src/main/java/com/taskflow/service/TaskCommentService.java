@@ -93,6 +93,35 @@ public class TaskCommentService {
         return TaskCommentDTO.fromEntity(comment);
     }
 
+    @Transactional
+    @CacheEvict(value = "comments", allEntries = true)
+    public TaskCommentDTO updateComment(Long commentId, String content, Long userId) {
+        TaskComment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedException("Only the author can edit this comment");
+        }
+        comment.setContent(content.trim());
+        TaskComment saved = commentRepository.save(comment);
+        messagingTemplate.convertAndSend("/topic/tasks/" + comment.getTask().getId() + "/comments",
+                (Object) Map.of("event", "COMMENT_UPDATED", "data", TaskCommentDTO.fromEntity(saved)));
+        return TaskCommentDTO.fromEntity(saved);
+    }
+
+    @Transactional
+    @CacheEvict(value = "comments", allEntries = true)
+    public void deleteComment(Long commentId, Long userId) {
+        TaskComment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found"));
+        if (!comment.getAuthor().getId().equals(userId)) {
+            throw new UnauthorizedException("Only the author can delete this comment");
+        }
+        Long taskId = comment.getTask().getId();
+        commentRepository.delete(comment);
+        messagingTemplate.convertAndSend("/topic/tasks/" + taskId + "/comments",
+                (Object) Map.of("event", "COMMENT_DELETED", "data", Map.of("commentId", commentId)));
+    }
+
     private ProjectTask getTask(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));

@@ -511,8 +511,24 @@
                       <div class="comment-head">
                         <strong>{{ c.authorName }}</strong>
                         <span class="comment-date">{{ c.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        @if (isOwnComment(c)) {
+                          <div class="comment-actions">
+                            <button type="button" class="comment-action-btn" (click)="startEditComment(c)">Editar</button>
+                            <button type="button" class="comment-action-btn danger" (click)="deleteComment(c.taskId, c.id)">Excluir</button>
+                          </div>
+                        }
                       </div>
-                      <p>{{ c.content }}</p>
+                      @if (editingCommentId() === c.id) {
+                        <div class="comment-edit-form">
+                          <textarea rows="2" [(ngModel)]="editingCommentContent" name="editComment"></textarea>
+                          <div class="comment-edit-btns">
+                            <button type="button" class="btn-primary btn-xs" (click)="saveEditComment(c.taskId, c.id)">Salvar</button>
+                            <button type="button" class="btn-ghost btn-xs" (click)="cancelEditComment()">Cancelar</button>
+                          </div>
+                        </div>
+                      } @else {
+                        <p>{{ c.content }}</p>
+                      }
                     </div>
                   </div>
                 } @empty {

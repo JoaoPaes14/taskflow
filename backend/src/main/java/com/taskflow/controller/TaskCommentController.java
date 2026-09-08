@@ -41,4 +41,23 @@ public class TaskCommentController {
         TaskCommentDTO comment = commentService.addComment(taskId, request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(comment);
     }
+
+    @PutMapping("/tasks/{taskId}/comments/{commentId}")
+    public ResponseEntity<TaskCommentDTO> updateComment(
+            @PathVariable Long taskId,
+            @PathVariable Long commentId,
+            @Valid @RequestBody TaskCommentRequestDTO request,
+            @RequestAttribute("userId") Long userId) {
+        TaskCommentDTO comment = commentService.updateComment(commentId, request.getContent(), userId);
+        return ResponseEntity.ok(comment);
+    }
+
+    @DeleteMapping("/tasks/{taskId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long taskId,
+            @PathVariable Long commentId,
+            @RequestAttribute("userId") Long userId) {
+        commentService.deleteComment(commentId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }

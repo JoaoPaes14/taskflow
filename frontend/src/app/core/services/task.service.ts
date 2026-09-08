@@ -103,4 +103,12 @@ export class TaskService {
   addComment(taskId: number, data: TaskCommentRequest): Observable<TaskComment> {
     return this.http.post<TaskComment>(`${this.API}/tasks/${taskId}/comments`, data);
   }
+
+  updateComment(taskId: number, commentId: number, data: TaskCommentRequest): Observable<TaskComment> {
+    return this.http.put<TaskComment>(`${this.API}/tasks/${taskId}/comments/${commentId}`, data);
+  }
+
+  deleteComment(taskId: number, commentId: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/tasks/${taskId}/comments/${commentId}`);
+  }
 }
