@@ -48,6 +48,8 @@ export class Dashboard implements OnInit {
   submitting = signal(false);
   formName = '';
   formDescription = '';
+  formMembers: string[] = [];
+  newMemberEmail = '';
 
   showInviteModal = signal(false);
   inviteTarget = signal<Project | null>(null);
@@ -145,6 +147,8 @@ export class Dashboard implements OnInit {
     this.submitting.set(false);
     this.formName = '';
     this.formDescription = '';
+    this.formMembers = [];
+    this.newMemberEmail = '';
     this.showModal.set(true);
   }
 
@@ -159,6 +163,21 @@ export class Dashboard implements OnInit {
 
   closeModal(): void {
     this.showModal.set(false);
+  }
+
+  addFormMember(): void {
+    const email = this.newMemberEmail.trim().toLowerCase();
+    if (!email) return;
+    if (this.formMembers.includes(email)) {
+      this.toast.error('Email ja adicionado.');
+      return;
+    }
+    this.formMembers.push(email);
+    this.newMemberEmail = '';
+  }
+
+  removeFormMember(index: number): void {
+    this.formMembers.splice(index, 1);
   }
 
   submit(): void {
@@ -201,13 +220,45 @@ export class Dashboard implements OnInit {
       this.projects.create(payload).subscribe({
         next: (created) => {
           this.projectsList.update((list) => [created, ...list]);
-          this.submitting.set(false);
-          this.toast.success('Projeto criado com sucesso!');
-          this.closeModal();
+          if (this.formMembers.length > 0) {
+            this.inviteMembersAfterCreate(created);
+          } else {
+            this.submitting.set(false);
+            this.toast.success('Projeto criado com sucesso!');
+            this.closeModal();
+          }
         },
         error: handleError,
       });
     }
+  }
+
+  private inviteMembersAfterCreate(project: Project): void {
+    let pending = this.formMembers.length;
+    const errors: string[] = [];
+    for (const email of this.formMembers) {
+      this.projects.inviteMember(project.id, email).subscribe({
+        next: () => {
+          pending--;
+          if (pending === 0) this.finishCreate(project, errors);
+        },
+        error: (err) => {
+          errors.push(err.error?.message || email);
+          pending--;
+          if (pending === 0) this.finishCreate(project, errors);
+        },
+      });
+    }
+  }
+
+  private finishCreate(project: Project, errors: string[]): void {
+    this.submitting.set(false);
+    const invited = this.formMembers.length - errors.length;
+    let msg = 'Projeto criado com sucesso!';
+    if (invited > 0) msg += ` ${invited} membro(s) convidado(s).`;
+    if (errors.length > 0) msg += ` Erros: ${errors.join(', ')}.`;
+    this.toast.success(msg);
+    this.closeModal();
   }
 
   onDelete(p: Project): void {

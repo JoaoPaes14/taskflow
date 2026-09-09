@@ -624,6 +624,47 @@
     gap: 0.75rem;
     margin-top: 1.5rem;
   }
+
+  .members-input-row {
+    display: flex;
+    gap: 0.5rem;
+
+    input {
+      flex: 1;
+    }
+  }
+
+  .members-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+
+  .member-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    background: var(--bg-secondary, #f1f5f9);
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 20px;
+    font-size: 0.8rem;
+
+    .chip-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      color: var(--text-secondary, #64748b);
+      padding: 0;
+
+      &:hover {
+        color: #ef4444;
+      }
+    }
+  }
 }
 
 .project-card.skeleton {

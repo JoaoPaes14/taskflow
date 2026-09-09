@@ -380,6 +380,41 @@
             placeholder="Descricao do projeto (opcional)"
           ></textarea>
         </div>
+
+        @if (!isEditing()) {
+          <div class="field">
+            <label>Adicionar membros (opcional)</label>
+            <div class="members-input-row">
+              <input
+                type="email"
+                placeholder="email@exemplo.com"
+                [(ngModel)]="newMemberEmail"
+                name="newMemberEmail"
+                (keyup.enter)="addFormMember()"
+              />
+              <button
+                type="button"
+                class="btn-secondary btn-sm"
+                [disabled]="!newMemberEmail.trim()"
+                (click)="addFormMember()"
+              >
+                Adicionar
+              </button>
+            </div>
+            @if (formMembers.length > 0) {
+              <div class="members-chips">
+                @for (email of formMembers; track email; let i = $index) {
+                  <span class="member-chip">
+                    {{ email }}
+                    <button type="button" class="chip-remove" (click)="removeFormMember(i)">
+                      &times;
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        }
         <div class="modal-actions">
           <button
             type="button"
