@@ -351,6 +351,53 @@
   </main>
 </div>
 
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditing() ? 'Editar projeto' : 'Novo projeto' }}</h2>
+        <button class="modal-close" (click)="closeModal()">&times;</button>
+      </div>
+      <form (ngSubmit)="submit()">
+        <div class="field">
+          <label for="project-name">Nome</label>
+          <input
+            type="text"
+            id="project-name"
+            [(ngModel)]="formName"
+            name="projectName"
+            placeholder="Nome do projeto"
+            required
+          />
+        </div>
+        <div class="field">
+          <label for="project-desc">Descricao</label>
+          <textarea
+            id="project-desc"
+            rows="3"
+            [(ngModel)]="formDescription"
+            name="projectDesc"
+            placeholder="Descricao do projeto (opcional)"
+          ></textarea>
+        </div>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            [disabled]="submitting()"
+            (click)="closeModal()"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="submitting()">
+            {{ submitting() ? 'Salvando...' : isEditing() ? 'Salvar' : 'Criar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
 @if (showInviteModal() && inviteTarget()) {
   <div class="modal-overlay" (click)="closeInviteModal()">
     <div class="modal" (click)="$event.stopPropagation()">
