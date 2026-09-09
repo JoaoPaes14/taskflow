@@ -24,10 +24,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.taskflow.event.TaskEvent;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +48,7 @@ public class ProjectTaskService {
     private final TaskLabelRepository labelRepository;
     private final ProjectActivityService activityService;
     private final NotificationService notificationService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Cacheable(value = "tasks", key = "#projectId")
     public List<ProjectTaskDTO> getTasks(Long projectId, Long userId) {
@@ -385,10 +386,7 @@ public class ProjectTaskService {
     }
 
     private void broadcastTaskEvent(Long projectId, String event, Object data) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("event", event);
-        payload.put("data", data);
-        messagingTemplate.convertAndSend("/topic/projects/" + projectId + "/tasks", (Object) payload);
+        eventPublisher.publishEvent(new TaskEvent(this, projectId, event, data));
     }
 
     private void renormalizeColumn(Long projectId, ProjectTask.TaskStatus status) {

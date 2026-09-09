@@ -1,6 +1,7 @@
 package com.taskflow.service;
 
 import com.taskflow.dto.NotificationDTO;
+import com.taskflow.event.NotificationEvent;
 import com.taskflow.entity.Notification;
 import com.taskflow.entity.User;
 import com.taskflow.repository.NotificationRepository;
@@ -8,7 +9,7 @@ import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +20,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void send(Long userId, String type, String message, Long referenceId, String referenceType) {
         User user = userRepository.findById(userId).orElse(null);
@@ -34,11 +35,9 @@ public class NotificationService {
                 .build();
 
         Notification saved = notificationRepository.save(notification);
-        messagingTemplate.convertAndSendToUser(
-                userId.toString(),
-                "/notifications",
-                NotificationDTO.fromEntity(saved)
-        );
+        eventPublisher.publishEvent(new NotificationEvent(
+                this, userId, type, message, saved.getId(), referenceType
+        ));
     }
 
     @Transactional(readOnly = true)

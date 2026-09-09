@@ -18,10 +18,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.taskflow.event.CommentEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,7 +37,7 @@ public class TaskCommentService {
     private final ProjectAccessService accessService;
     private final ProjectActivityService activityService;
     private final NotificationService notificationService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<TaskCommentDTO> getComments(Long taskId, Long userId) {
@@ -90,7 +91,7 @@ public class TaskCommentService {
                     task.getId(), "TASK");
         }
 
-        messagingTemplate.convertAndSend("/topic/tasks/" + task.getId() + "/comments", TaskCommentDTO.fromEntity(comment));
+        eventPublisher.publishEvent(new CommentEvent(this, task.getId(), "COMMENT_CREATED", TaskCommentDTO.fromEntity(comment)));
 
         return TaskCommentDTO.fromEntity(comment);
     }
@@ -105,8 +106,7 @@ public class TaskCommentService {
         }
         comment.setContent(content.trim());
         TaskComment saved = commentRepository.save(comment);
-        messagingTemplate.convertAndSend("/topic/tasks/" + comment.getTask().getId() + "/comments",
-                (Object) Map.of("event", "COMMENT_UPDATED", "data", TaskCommentDTO.fromEntity(saved)));
+        eventPublisher.publishEvent(new CommentEvent(this, comment.getTask().getId(), "COMMENT_UPDATED", TaskCommentDTO.fromEntity(saved)));
         return TaskCommentDTO.fromEntity(saved);
     }
 
@@ -120,8 +120,7 @@ public class TaskCommentService {
         }
         Long taskId = comment.getTask().getId();
         commentRepository.delete(comment);
-        messagingTemplate.convertAndSend("/topic/tasks/" + taskId + "/comments",
-                (Object) Map.of("event", "COMMENT_DELETED", "data", Map.of("commentId", commentId)));
+        eventPublisher.publishEvent(new CommentEvent(this, taskId, "COMMENT_DELETED", Map.of("commentId", commentId)));
     }
 
     private ProjectTask getTask(Long taskId) {
