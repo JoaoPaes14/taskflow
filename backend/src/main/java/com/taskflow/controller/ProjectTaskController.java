@@ -7,6 +7,7 @@ import com.taskflow.dto.ProjectTaskDTO;
 import com.taskflow.dto.ProjectTaskRequestDTO;
 import com.taskflow.dto.UpdateTaskStatusDTO;
 import com.taskflow.service.ProjectTaskService;
+import com.taskflow.util.CsvExportUtil;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -115,23 +116,10 @@ public class ProjectTaskController {
             @RequestAttribute("userId") Long userId) {
         List<ProjectTaskDTO> tasks = taskService.getTasks(projectId, userId);
         if ("csv".equalsIgnoreCase(format)) {
-            StringBuilder csv = new StringBuilder();
-            csv.append("ID,Titulo,Descricao,Status,Prioridade,Data Limite,Responsavel,Criado em\n");
-            for (ProjectTaskDTO t : tasks) {
-                csv.append(String.format("%d,\"%s\",\"%s\",%s,%s,%s,\"%s\",%s\n",
-                        t.getId(),
-                        escape(t.getTitle()),
-                        escape(t.getDescription()),
-                        t.getStatus(),
-                        t.getPriority(),
-                        t.getDueDate() != null ? t.getDueDate() : "",
-                        escape(t.getAssigneeName()),
-                        t.getCreatedAt()));
-            }
             return ResponseEntity.ok()
                     .header("Content-Type", "text/csv")
                     .header("Content-Disposition", "attachment; filename=projeto_" + projectId + ".csv")
-                    .body(csv.toString());
+                    .body(CsvExportUtil.toCsv(tasks));
         }
         return ResponseEntity.ok(tasks);
     }
@@ -172,12 +160,4 @@ public class ProjectTaskController {
         return ResponseEntity.noContent().build();
     }
 
-    private String escape(String s) {
-        if (s == null) return "";
-        String value = s.replace("\"", "\"\"");
-        if (!value.isEmpty() && "+-=@\t\r".indexOf(value.charAt(0)) >= 0) {
-            return "'" + value;
-        }
-        return value;
-    }
 }
