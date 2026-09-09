@@ -5,8 +5,7 @@ export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   {
     path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login').then((m) => m.LoginComponent),
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.LoginComponent),
   },
   {
     path: 'register',
@@ -22,19 +21,16 @@ export const routes: Routes = [
   {
     path: 'projects/:id',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/board/board/board').then((m) => m.Board),
+    loadComponent: () => import('./features/board/board/board').then((m) => m.Board),
   },
   {
     path: 'my-tasks',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/my-tasks/my-tasks').then((m) => m.MyTasksComponent),
+    loadComponent: () => import('./features/my-tasks/my-tasks').then((m) => m.MyTasksComponent),
   },
   {
     path: 'admin',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/admin/admin/admin').then((m) => m.AdminComponent),
+    loadComponent: () => import('./features/admin/admin/admin').then((m) => m.AdminComponent),
   },
 ];

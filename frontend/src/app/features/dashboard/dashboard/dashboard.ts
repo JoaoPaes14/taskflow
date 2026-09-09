@@ -1,4 +1,12 @@
-import { Component, inject, signal, computed, OnInit, HostListener, ElementRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  HostListener,
+  ElementRef,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
@@ -21,9 +29,7 @@ export class Dashboard implements OnInit {
   private auth = inject(AuthService);
 
   currentUserId = computed(() => this.auth.currentUser()?.userId ?? null);
-  canManageMembers = computed(
-    () => this.inviteTarget()?.createdById === this.currentUserId(),
-  );
+  canManageMembers = computed(() => this.inviteTarget()?.createdById === this.currentUserId());
 
   projectsList = signal<Project[]>([]);
   loading = signal(false);
@@ -78,9 +84,7 @@ export class Dashboard implements OnInit {
   });
 
   totalProjects = computed(() => this.projectsList().length);
-  activeProjects = computed(
-    () => this.projectsList().filter((p) => p.status === 'ACTIVE').length,
-  );
+  activeProjects = computed(() => this.projectsList().filter((p) => p.status === 'ACTIVE').length);
   archivedProjects = computed(
     () => this.projectsList().filter((p) => p.status === 'ARCHIVED').length,
   );
@@ -186,9 +190,7 @@ export class Dashboard implements OnInit {
       }
       this.projects.update(id, payload).subscribe({
         next: (updated) => {
-          this.projectsList.update((list) =>
-            list.map((p) => (p.id === updated.id ? updated : p)),
-          );
+          this.projectsList.update((list) => list.map((p) => (p.id === updated.id ? updated : p)));
           this.submitting.set(false);
           this.toast.success('Projeto atualizado com sucesso!');
           this.closeModal();
@@ -239,9 +241,7 @@ export class Dashboard implements OnInit {
   }
 
   private updateProjectInList(updated: Project, successMsg: string): void {
-    this.projectsList.update((list) =>
-      list.map((x) => (x.id === updated.id ? updated : x)),
-    );
+    this.projectsList.update((list) => list.map((x) => (x.id === updated.id ? updated : x)));
     this.toast.success(successMsg);
   }
 
@@ -307,7 +307,9 @@ export class Dashboard implements OnInit {
       this.projects.removeMember(target.id, m.userId).subscribe({
         next: () => {
           this.members.update((list) => list.filter((x) => x.userId !== m.userId));
-          this.toast.success(isSelf ? 'Voce saiu do projeto.' : `${m.name} foi removido do projeto.`);
+          this.toast.success(
+            isSelf ? 'Voce saiu do projeto.' : `${m.name} foi removido do projeto.`,
+          );
           if (isSelf) {
             this.closeInviteModal();
             this.loadProjects();

@@ -90,7 +90,13 @@ describe('AuthService', () => {
 
   it('should clear token and user on logout', () => {
     localStorage.setItem('taskflow_token', 'abc');
-    const mockUser: AuthResponse = { token: 'abc', userId: 1, name: 'João', email: 'j@j.com', role: 'MEMBER' };
+    const mockUser: AuthResponse = {
+      token: 'abc',
+      userId: 1,
+      name: 'João',
+      email: 'j@j.com',
+      role: 'MEMBER',
+    };
     service['currentUser'].set(mockUser);
 
     service.logout();

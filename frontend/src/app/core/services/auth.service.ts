@@ -20,21 +20,21 @@ export class AuthService {
   }
 
   register(data: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API}/register`, data).pipe(
-      tap((res) => this.setSession(res)),
-    );
+    return this.http
+      .post<AuthResponse>(`${this.API}/register`, data)
+      .pipe(tap((res) => this.setSession(res)));
   }
 
   login(data: AuthRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API}/login`, data).pipe(
-      tap((res) => this.setSession(res)),
-    );
+    return this.http
+      .post<AuthResponse>(`${this.API}/login`, data)
+      .pipe(tap((res) => this.setSession(res)));
   }
 
   getProfile(): Observable<AuthResponse> {
-    return this.http.get<AuthResponse>(`${this.API}/me`).pipe(
-      tap((res) => this.currentUser.set(res)),
-    );
+    return this.http
+      .get<AuthResponse>(`${this.API}/me`)
+      .pipe(tap((res) => this.currentUser.set(res)));
   }
 
   refreshProfile(): void {
@@ -45,10 +45,14 @@ export class AuthService {
     });
   }
 
-  updateProfile(data: { name: string; email: string; password?: string }): Observable<AuthResponse> {
-    return this.http.put<AuthResponse>(`${this.API}/me`, data).pipe(
-      tap((res) => this.currentUser.set(res)),
-    );
+  updateProfile(data: {
+    name: string;
+    email: string;
+    password?: string;
+  }): Observable<AuthResponse> {
+    return this.http
+      .put<AuthResponse>(`${this.API}/me`, data)
+      .pipe(tap((res) => this.currentUser.set(res)));
   }
 
   logout(): void {

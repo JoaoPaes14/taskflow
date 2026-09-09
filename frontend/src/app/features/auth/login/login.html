@@ -71,11 +71,7 @@
           }
         </div>
 
-        <button
-          type="submit"
-          class="btn-primary"
-          [disabled]="loginForm.invalid || submitting()"
-        >
+        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || submitting()">
           {{ submitting() ? 'Entrando...' : 'Entrar' }}
         </button>
       </form>

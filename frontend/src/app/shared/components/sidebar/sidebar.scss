@@ -38,7 +38,9 @@
       justify-content: center;
       padding-left: 0;
       padding-right: 0;
-      span { display: none; }
+      span {
+        display: none;
+      }
     }
 
     .user-area {
@@ -75,7 +77,9 @@
         justify-content: center;
         flex-shrink: 0;
         box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
 
         &:hover {
           transform: scale(1.05);
@@ -322,27 +326,27 @@
         background: var(--bg);
         color: var(--text-muted);
 
-        &[data-type="TASK_ASSIGNED"] {
+        &[data-type='TASK_ASSIGNED'] {
           background: #ede9fe;
           color: #7c3aed;
         }
-        &[data-type="COMMENT_ADDED"] {
+        &[data-type='COMMENT_ADDED'] {
           background: #dbeafe;
           color: #2563eb;
         }
-        &[data-type="PROJECT_INVITE"] {
+        &[data-type='PROJECT_INVITE'] {
           background: #dcfce7;
           color: #16a34a;
         }
-        &[data-type="DUE_DATE_TODAY"] {
+        &[data-type='DUE_DATE_TODAY'] {
           background: #fef3c7;
           color: #d97706;
         }
-        &[data-type="DUE_DATE_TOMORROW"] {
+        &[data-type='DUE_DATE_TOMORROW'] {
           background: #e0e7ff;
           color: #4f46e5;
         }
-        &[data-type="DUE_DATE_OVERDUE"] {
+        &[data-type='DUE_DATE_OVERDUE'] {
           background: #fee2e2;
           color: #dc2626;
         }

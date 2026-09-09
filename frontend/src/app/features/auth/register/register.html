@@ -7,7 +7,9 @@
         </div>
         <h1>TaskFlow</h1>
       </div>
-      <p class="tagline">Comece a organizar seus projetos gratuitamente. Leva menos de um minuto.</p>
+      <p class="tagline">
+        Comece a organizar seus projetos gratuitamente. Leva menos de um minuto.
+      </p>
       <div class="features">
         <div class="feature">
           <span class="feature-icon">&check;</span>
@@ -87,11 +89,7 @@
           }
         </div>
 
-        <button
-          type="submit"
-          class="btn-primary"
-          [disabled]="registerForm.invalid || submitting()"
-        >
+        <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || submitting()">
           {{ submitting() ? 'Criando conta...' : 'Criar conta' }}
         </button>
       </form>

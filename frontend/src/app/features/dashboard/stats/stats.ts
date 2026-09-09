@@ -1,5 +1,21 @@
-import { Component, Input, OnChanges, SimpleChanges, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
-import { Chart, ChartConfiguration, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js';
+import {
+  Component,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  ElementRef,
+  ViewChild,
+  AfterViewInit,
+  OnDestroy,
+} from '@angular/core';
+import {
+  Chart,
+  ChartConfiguration,
+  DoughnutController,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import { ProjectStats } from '../../../core/services/task.service';
 
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
@@ -32,24 +48,44 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
       </div>
     </div>
   `,
-  styles: [`
-    .stats-section { margin-bottom: 1.5rem; }
-    .stats-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-    }
-    .chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1rem;
-      h3 { font-size: 0.82rem; font-weight: 600; margin: 0 0 0.75rem; color: var(--text-muted); }
-    }
-    .chart-wrap { position: relative; height: 180px; }
-    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
-  `]
+  styles: [
+    `
+      .stats-section {
+        margin-bottom: 1.5rem;
+      }
+      .stats-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+      }
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+      }
+      .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        h3 {
+          font-size: 0.82rem;
+          font-weight: 600;
+          margin: 0 0 0.75rem;
+          color: var(--text-muted);
+        }
+      }
+      .chart-wrap {
+        position: relative;
+        height: 180px;
+      }
+      @media (max-width: 900px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `,
+  ],
 })
 export class StatsComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() stats: ProjectStats | null = null;
@@ -93,18 +129,25 @@ export class StatsComponent implements OnChanges, AfterViewInit, OnDestroy {
       type: 'doughnut',
       data: {
         labels: ['A fazer', 'Em progresso', 'Concluido'],
-        datasets: [{
-          data: [s.todoTasks, s.inProgressTasks, s.doneTasks],
-          backgroundColor: ['#f59e0b', '#6366f1', '#10b981'],
-          borderWidth: 0,
-        }]
+        datasets: [
+          {
+            data: [s.todoTasks, s.inProgressTasks, s.doneTasks],
+            backgroundColor: ['#f59e0b', '#6366f1', '#10b981'],
+            borderWidth: 0,
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         cutout: '65%',
-        plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } } }
-      } as any
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' },
+          },
+        },
+      } as any,
     };
     this.statusChart = new Chart(this.statusRef.nativeElement, config);
   }
@@ -116,18 +159,25 @@ export class StatsComponent implements OnChanges, AfterViewInit, OnDestroy {
       type: 'doughnut',
       data: {
         labels: ['Baixa', 'Media', 'Alta'],
-        datasets: [{
-          data: [p['LOW'] || 0, p['MEDIUM'] || 0, p['HIGH'] || 0],
-          backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-          borderWidth: 0,
-        }]
+        datasets: [
+          {
+            data: [p['LOW'] || 0, p['MEDIUM'] || 0, p['HIGH'] || 0],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+            borderWidth: 0,
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         cutout: '65%',
-        plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } } }
-      } as any
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' },
+          },
+        },
+      } as any,
     };
     this.priorityChart = new Chart(this.priorityRef.nativeElement, config);
   }
@@ -137,23 +187,39 @@ export class StatsComponent implements OnChanges, AfterViewInit, OnDestroy {
     const a = this.stats!.tasksByAssignee;
     const names = Object.keys(a);
     const values = Object.values(a);
-    const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+    const colors = [
+      '#6366f1',
+      '#10b981',
+      '#f59e0b',
+      '#ef4444',
+      '#8b5cf6',
+      '#ec4899',
+      '#14b8a6',
+      '#f97316',
+    ];
     const config: ChartConfiguration = {
       type: 'doughnut',
       data: {
         labels: names.length > 0 ? names : ['Sem atribuicao'],
-        datasets: [{
-          data: names.length > 0 ? values : [1],
-          backgroundColor: names.length > 0 ? colors.slice(0, names.length) : ['#d1d5db'],
-          borderWidth: 0,
-        }]
+        datasets: [
+          {
+            data: names.length > 0 ? values : [1],
+            backgroundColor: names.length > 0 ? colors.slice(0, names.length) : ['#d1d5db'],
+            borderWidth: 0,
+          },
+        ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         cutout: '65%',
-        plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } } }
-      } as any
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' },
+          },
+        },
+      } as any,
     };
     this.assigneeChart = new Chart(this.assigneeRef.nativeElement, config);
   }

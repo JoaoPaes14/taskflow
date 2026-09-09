@@ -1,12 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {
-  Project,
-  ProjectActivity,
-  ProjectMember,
-  ProjectRequest,
-} from '../models/project.model';
+import { Project, ProjectActivity, ProjectMember, ProjectRequest } from '../models/project.model';
 import { PageResponse } from '../models/page.model';
 
 @Injectable({ providedIn: 'root' })
@@ -61,7 +56,11 @@ export class ProjectService {
     return this.http.get<ProjectActivity[]>(`${this.API}/${id}/activities`);
   }
 
-  getActivitiesPaged(id: number, page: number, size: number): Observable<PageResponse<ProjectActivity>> {
+  getActivitiesPaged(
+    id: number,
+    page: number,
+    size: number,
+  ): Observable<PageResponse<ProjectActivity>> {
     return this.http.get<PageResponse<ProjectActivity>>(`${this.API}/${id}/activities`, {
       params: new HttpParams().set('page', page).set('size', size),
     });

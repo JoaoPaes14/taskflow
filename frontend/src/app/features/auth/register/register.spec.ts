@@ -52,7 +52,11 @@ describe('RegisterComponent', () => {
     component.password = '123456';
     component.onSubmit();
 
-    expect(auth.register).toHaveBeenCalledWith({ name: 'João', email: 'j@j.com', password: '123456' });
+    expect(auth.register).toHaveBeenCalledWith({
+      name: 'João',
+      email: 'j@j.com',
+      password: '123456',
+    });
     expect(navigateSpy).toHaveBeenCalledWith(['/dashboard']);
     expect(toast.success).toHaveBeenCalled();
   });

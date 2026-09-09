@@ -24,10 +24,7 @@ describe('SidebarComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SidebarComponent],
-      providers: [
-        provideRouter([{ path: 'login', component: DummyComponent }]),
-        AuthService,
-      ],
+      providers: [provideRouter([{ path: 'login', component: DummyComponent }]), AuthService],
     }).compileComponents();
 
     auth = TestBed.inject(AuthService);

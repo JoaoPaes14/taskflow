@@ -206,9 +206,7 @@ describe('Board', () => {
 
   it('should show toast error when deleting fails', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
-    tasks.deleteTask.mockReturnValue(
-      throwError(() => ({ error: { message: 'Erro ao excluir' } })),
-    );
+    tasks.deleteTask.mockReturnValue(throwError(() => ({ error: { message: 'Erro ao excluir' } })));
     component.tasksList.set([mockTask]);
 
     component.onDelete(mockTask);

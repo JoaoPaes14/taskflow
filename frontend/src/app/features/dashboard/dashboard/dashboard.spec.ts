@@ -10,7 +10,17 @@ import { Project } from '../../../core/models/project.model';
 describe('Dashboard', () => {
   let component: Dashboard;
   let fixture: ComponentFixture<Dashboard>;
-  let projects: { getAll: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; delete: ReturnType<typeof vi.fn>; archive: ReturnType<typeof vi.fn>; restore: ReturnType<typeof vi.fn>; getMembers: ReturnType<typeof vi.fn>; inviteMember: ReturnType<typeof vi.fn>; removeMember: ReturnType<typeof vi.fn> };
+  let projects: {
+    getAll: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+    archive: ReturnType<typeof vi.fn>;
+    restore: ReturnType<typeof vi.fn>;
+    getMembers: ReturnType<typeof vi.fn>;
+    inviteMember: ReturnType<typeof vi.fn>;
+    removeMember: ReturnType<typeof vi.fn>;
+  };
   let auth: { currentUser: ReturnType<typeof vi.fn> };
 
   const mockMember = {
@@ -90,7 +100,9 @@ describe('Dashboard', () => {
   });
 
   it('should show toast error when load fails', () => {
-    projects.getAll.mockReturnValue(throwError(() => ({ error: { message: 'Falha ao carregar' } })));
+    projects.getAll.mockReturnValue(
+      throwError(() => ({ error: { message: 'Falha ao carregar' } })),
+    );
     component.ngOnInit();
     expect(toast.error).toHaveBeenCalledWith('Falha ao carregar');
   });
@@ -156,7 +168,10 @@ describe('Dashboard', () => {
     component.formName = 'Site Atualizado';
     component.submit();
 
-    expect(projects.update).toHaveBeenCalledWith(1, { name: 'Site Atualizado', description: 'Site corporativo' });
+    expect(projects.update).toHaveBeenCalledWith(1, {
+      name: 'Site Atualizado',
+      description: 'Site corporativo',
+    });
     expect(component.projectsList()[0].name).toBe('Site Atualizado');
   });
 

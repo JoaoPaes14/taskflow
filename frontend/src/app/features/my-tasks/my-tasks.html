@@ -22,10 +22,30 @@
   </div>
 
   <div class="filters">
-    <button class="filter-btn" [class.active]="filterStatus() === 'ALL'" (click)="setFilter('ALL')">Todas</button>
-    <button class="filter-btn" [class.active]="filterStatus() === 'TODO'" (click)="setFilter('TODO')">A fazer</button>
-    <button class="filter-btn" [class.active]="filterStatus() === 'IN_PROGRESS'" (click)="setFilter('IN_PROGRESS')">Em progresso</button>
-    <button class="filter-btn" [class.active]="filterStatus() === 'DONE'" (click)="setFilter('DONE')">Concluido</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'ALL'" (click)="setFilter('ALL')">
+      Todas
+    </button>
+    <button
+      class="filter-btn"
+      [class.active]="filterStatus() === 'TODO'"
+      (click)="setFilter('TODO')"
+    >
+      A fazer
+    </button>
+    <button
+      class="filter-btn"
+      [class.active]="filterStatus() === 'IN_PROGRESS'"
+      (click)="setFilter('IN_PROGRESS')"
+    >
+      Em progresso
+    </button>
+    <button
+      class="filter-btn"
+      [class.active]="filterStatus() === 'DONE'"
+      (click)="setFilter('DONE')"
+    >
+      Concluido
+    </button>
   </div>
 
   @if (loading()) {
@@ -39,9 +59,13 @@
             <div class="task-title">{{ task.title }}</div>
             <div class="task-project">{{ task.projectName }}</div>
           </div>
-          <span class="priority-badge" [class]="task.priority.toLowerCase()">{{ task.priority }}</span>
+          <span class="priority-badge" [class]="task.priority.toLowerCase()">{{
+            task.priority
+          }}</span>
           @if (task.dueDate) {
-            <span class="task-due" [class]="getDueClass(task)">{{ task.dueDate | date:'dd/MM' }}</span>
+            <span class="task-due" [class]="getDueClass(task)">{{
+              task.dueDate | date: 'dd/MM'
+            }}</span>
           }
         </div>
       } @empty {

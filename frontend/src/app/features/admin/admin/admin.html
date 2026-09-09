@@ -34,7 +34,10 @@
               <tr [class.current-user]="isCurrentUser(user.userId)">
                 <td>
                   <div class="user-cell">
-                    <span class="user-avatar" [style.background]="roleColors[user.role] || '#6366f1'">
+                    <span
+                      class="user-avatar"
+                      [style.background]="roleColors[user.role] || '#6366f1'"
+                    >
                       {{ getInitial(user.name) }}
                     </span>
                     <span class="user-name">
@@ -47,7 +50,10 @@
                 </td>
                 <td class="email-cell">{{ user.email }}</td>
                 <td>
-                  <span class="role-badge" [style.--role-color]="roleColors[user.role] || '#6366f1'">
+                  <span
+                    class="role-badge"
+                    [style.--role-color]="roleColors[user.role] || '#6366f1'"
+                  >
                     {{ roleLabels[user.role] || user.role }}
                   </span>
                 </td>

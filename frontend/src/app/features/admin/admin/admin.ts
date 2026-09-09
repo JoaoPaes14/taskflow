@@ -70,9 +70,7 @@ export class AdminComponent implements OnInit {
     this.confirmAction.set(() => {
       this.admin.updateUserRole(user.userId, newRole).subscribe({
         next: (updated) => {
-          this.users.update((list) =>
-            list.map((u) => (u.userId === updated.userId ? updated : u)),
-          );
+          this.users.update((list) => list.map((u) => (u.userId === updated.userId ? updated : u)));
           this.toast.success(`Role de ${user.name} alterada para ${this.roleLabels[newRole]}.`);
         },
         error: (err) => {

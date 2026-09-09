@@ -11,7 +11,14 @@ import { Notification } from '../../../core/models/notification.model';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [RouterLink, RouterLinkActive, TitleCasePipe, DatePipe, ConfirmModalComponent, ProfileModalComponent],
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    TitleCasePipe,
+    DatePipe,
+    ConfirmModalComponent,
+    ProfileModalComponent,
+  ],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })

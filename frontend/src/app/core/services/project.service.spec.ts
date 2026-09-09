@@ -108,7 +108,15 @@ describe('ProjectService', () => {
 
   it('should GET members of a project', () => {
     const members: ProjectMember[] = [
-      { id: 10, userId: 1, name: 'João', email: 'joao@x.com', role: 'ADMIN', projectRole: 'MEMBER', joinedAt: '2026-01-01' },
+      {
+        id: 10,
+        userId: 1,
+        name: 'João',
+        email: 'joao@x.com',
+        role: 'ADMIN',
+        projectRole: 'MEMBER',
+        joinedAt: '2026-01-01',
+      },
     ];
 
     service.getMembers(1).subscribe((list) => {

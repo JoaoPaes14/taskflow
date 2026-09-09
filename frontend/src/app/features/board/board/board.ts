@@ -1,4 +1,14 @@
-import { Component, computed, inject, signal, OnInit, OnDestroy, ElementRef, ViewChild, HostListener } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  OnInit,
+  OnDestroy,
+  ElementRef,
+  ViewChild,
+  HostListener,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -33,7 +43,14 @@ const COLUMNS: { key: TaskStatus; label: string }[] = [
 
 @Component({
   selector: 'app-board',
-  imports: [SidebarComponent, FormsModule, DatePipe, ConfirmModalComponent, StatsComponent, CalendarComponent],
+  imports: [
+    SidebarComponent,
+    FormsModule,
+    DatePipe,
+    ConfirmModalComponent,
+    StatsComponent,
+    CalendarComponent,
+  ],
   templateUrl: './board.html',
   styleUrl: './board.scss',
 })
@@ -221,25 +238,59 @@ export class Board implements OnInit, OnDestroy {
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
+      return;
 
     if (event.key === 'Escape') {
-      if (this.showModal()) { this.closeModal(); return; }
-      if (this.editingCommentId()) { this.cancelEditComment(); return; }
-      if (this.showLabelsModal()) { this.showLabelsModal.set(false); return; }
-      if (this.showStats()) { this.showStats.set(false); return; }
-      if (this.showCalendar()) { this.showCalendar.set(false); return; }
-      if (this.showMembers()) { this.showMembers.set(false); return; }
-      if (this.showActivity()) { this.showActivity.set(false); return; }
+      if (this.showModal()) {
+        this.closeModal();
+        return;
+      }
+      if (this.editingCommentId()) {
+        this.cancelEditComment();
+        return;
+      }
+      if (this.showLabelsModal()) {
+        this.showLabelsModal.set(false);
+        return;
+      }
+      if (this.showStats()) {
+        this.showStats.set(false);
+        return;
+      }
+      if (this.showCalendar()) {
+        this.showCalendar.set(false);
+        return;
+      }
+      if (this.showMembers()) {
+        this.showMembers.set(false);
+        return;
+      }
+      if (this.showActivity()) {
+        this.showActivity.set(false);
+        return;
+      }
     }
 
     if (event.key === 'n' || event.key === 'N') {
-      if (!this.showModal()) { this.openCreate('TODO'); event.preventDefault(); }
+      if (!this.showModal()) {
+        this.openCreate('TODO');
+        event.preventDefault();
+      }
     }
 
-    if (event.key === '1') { this.scrollToColumn('TODO'); event.preventDefault(); }
-    if (event.key === '2') { this.scrollToColumn('IN_PROGRESS'); event.preventDefault(); }
-    if (event.key === '3') { this.scrollToColumn('DONE'); event.preventDefault(); }
+    if (event.key === '1') {
+      this.scrollToColumn('TODO');
+      event.preventDefault();
+    }
+    if (event.key === '2') {
+      this.scrollToColumn('IN_PROGRESS');
+      event.preventDefault();
+    }
+    if (event.key === '3') {
+      this.scrollToColumn('DONE');
+      event.preventDefault();
+    }
   }
 
   private scrollToColumn(status: string): void {
@@ -268,9 +319,7 @@ export class Board implements OnInit, OnDestroy {
         }
         case 'TASK_UPDATED': {
           const task: ProjectTask = event.data;
-          this.tasksList.update((list) =>
-            list.map((t) => (t.id === task.id ? task : t))
-          );
+          this.tasksList.update((list) => list.map((t) => (t.id === task.id ? task : t)));
           break;
         }
         case 'TASK_ARCHIVED': {
@@ -305,13 +354,11 @@ export class Board implements OnInit, OnDestroy {
         switch (event.event) {
           case 'COMMENT_UPDATED':
             this.comments.update((list) =>
-              list.map((c) => (c.id === event.data.id ? event.data : c))
+              list.map((c) => (c.id === event.data.id ? event.data : c)),
             );
             break;
           case 'COMMENT_DELETED':
-            this.comments.update((list) =>
-              list.filter((c) => c.id !== event.data.commentId)
-            );
+            this.comments.update((list) => list.filter((c) => c.id !== event.data.commentId));
             break;
         }
       } else {
@@ -376,12 +423,15 @@ export class Board implements OnInit, OnDestroy {
         }
       } else if (file.name.endsWith('.csv')) {
         const lines = content.split('\n').filter((l) => l.trim());
-        if (lines.length < 2) { this.toast.error('CSV vazio.'); return; }
+        if (lines.length < 2) {
+          this.toast.error('CSV vazio.');
+          return;
+        }
         const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map((v) => v.trim().replace(/^"|"$/g, ''));
           const row: any = {};
-          headers.forEach((h, idx) => row[h] = values[idx]);
+          headers.forEach((h, idx) => (row[h] = values[idx]));
           tasks.push({
             title: row.titulo || row.title || 'Sem titulo',
             description: row.descricao || row.description || '',
@@ -392,7 +442,10 @@ export class Board implements OnInit, OnDestroy {
         }
       }
 
-      if (tasks.length === 0) { this.toast.error('Nenhuma tarefa encontrada.'); return; }
+      if (tasks.length === 0) {
+        this.toast.error('Nenhuma tarefa encontrada.');
+        return;
+      }
 
       this.tasks.import(projectId, tasks).subscribe({
         next: (created) => {
@@ -567,9 +620,7 @@ export class Board implements OnInit, OnDestroy {
     if (!taskId) return;
     this.subtaskApi.toggleSubtask(taskId, sub.id).subscribe({
       next: (updated) => {
-        this.subtasks.update((list) =>
-          list.map((s) => (s.id === updated.id ? updated : s)),
-        );
+        this.subtasks.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
       },
       error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar subtask.'),
     });
@@ -681,15 +732,17 @@ export class Board implements OnInit, OnDestroy {
 
   saveEditComment(taskId: number, commentId: number): void {
     if (!this.editingCommentContent.trim()) return;
-    this.tasks.updateComment(taskId, commentId, { content: this.editingCommentContent.trim() }).subscribe({
-      next: (updated) => {
-        this.comments.update((list) => list.map((c) => (c.id === commentId ? updated : c)));
-        this.editingCommentId.set(null);
-        this.editingCommentContent = '';
-        this.toast.success('Comentario atualizado.');
-      },
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar comentario.'),
-    });
+    this.tasks
+      .updateComment(taskId, commentId, { content: this.editingCommentContent.trim() })
+      .subscribe({
+        next: (updated) => {
+          this.comments.update((list) => list.map((c) => (c.id === commentId ? updated : c)));
+          this.editingCommentId.set(null);
+          this.editingCommentContent = '';
+          this.toast.success('Comentario atualizado.');
+        },
+        error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar comentario.'),
+      });
   }
 
   deleteComment(taskId: number, commentId: number): void {
@@ -856,21 +909,23 @@ export class Board implements OnInit, OnDestroy {
       return;
     }
     this.labelSubmitting.set(true);
-    this.labels.createLabel(project.id, {
-      name: this.newLabelName.trim(),
-      color: this.newLabelColor,
-    }).subscribe({
-      next: (created) => {
-        this.projectLabels.update((list) => [...list, created]);
-        this.newLabelName = '';
-        this.labelSubmitting.set(false);
-        this.toast.success('Label criada!');
-      },
-      error: (err) => {
-        this.labelSubmitting.set(false);
-        this.toast.error(err.error?.message || 'Erro ao criar label.');
-      },
-    });
+    this.labels
+      .createLabel(project.id, {
+        name: this.newLabelName.trim(),
+        color: this.newLabelColor,
+      })
+      .subscribe({
+        next: (created) => {
+          this.projectLabels.update((list) => [...list, created]);
+          this.newLabelName = '';
+          this.labelSubmitting.set(false);
+          this.toast.success('Label criada!');
+        },
+        error: (err) => {
+          this.labelSubmitting.set(false);
+          this.toast.error(err.error?.message || 'Erro ao criar label.');
+        },
+      });
   }
 
   startEditLabel(label: TaskLabel): void {
@@ -888,17 +943,19 @@ export class Board implements OnInit, OnDestroy {
   saveEditLabel(label: TaskLabel): void {
     const project = this.project();
     if (!project || !this.editingLabelName.trim()) return;
-    this.labels.updateLabel(project.id, label.id, {
-      name: this.editingLabelName.trim(),
-      color: this.editingLabelColor,
-    }).subscribe({
-      next: (updated) => {
-        this.projectLabels.update((list) => list.map((l) => (l.id === label.id ? updated : l)));
-        this.editingLabelId.set(null);
-        this.toast.success('Label atualizada.');
-      },
-      error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar label.'),
-    });
+    this.labels
+      .updateLabel(project.id, label.id, {
+        name: this.editingLabelName.trim(),
+        color: this.editingLabelColor,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.projectLabels.update((list) => list.map((l) => (l.id === label.id ? updated : l)));
+          this.editingLabelId.set(null);
+          this.toast.success('Label atualizada.');
+        },
+        error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar label.'),
+      });
   }
 
   deleteLabel(label: TaskLabel): void {
@@ -980,7 +1037,7 @@ export class Board implements OnInit, OnDestroy {
     this.tasks.batchUpdateStatus(ids, status).subscribe({
       next: () => {
         this.tasksList.update((list) =>
-          list.map((t) => ids.includes(t.id) ? { ...t, status } : t)
+          list.map((t) => (ids.includes(t.id) ? { ...t, status } : t)),
         );
         this.clearSelection();
         this.toast.success(`${ids.length} tarefa(s) movida(s).`);
@@ -1017,7 +1074,11 @@ export class Board implements OnInit, OnDestroy {
   }
 
   hasActiveFilters(): boolean {
-    return this.filterLabelIds().length > 0 || this.filterAssigneeId() !== null || this.filterPriority() !== null;
+    return (
+      this.filterLabelIds().length > 0 ||
+      this.filterAssigneeId() !== null ||
+      this.filterPriority() !== null
+    );
   }
 
   routerBack(): void {

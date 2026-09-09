@@ -35,7 +35,11 @@ export class TaskService {
     return this.http.get<ProjectTask[]>(`${this.API}/tasks/my`);
   }
 
-  getTasksPaged(projectId: number, page: number, size: number): Observable<PageResponse<ProjectTask>> {
+  getTasksPaged(
+    projectId: number,
+    page: number,
+    size: number,
+  ): Observable<PageResponse<ProjectTask>> {
     return this.http.get<PageResponse<ProjectTask>>(`${this.API}/projects/${projectId}/tasks`, {
       params: new HttpParams().set('page', page).set('size', size),
     });
@@ -71,7 +75,7 @@ export class TaskService {
 
   search(projectId: number, query: string): Observable<ProjectTask[]> {
     return this.http.get<ProjectTask[]>(`${this.API}/projects/${projectId}/search`, {
-      params: { q: query }
+      params: { q: query },
     });
   }
 
@@ -102,7 +106,11 @@ export class TaskService {
     return this.http.get<TaskComment[]>(`${this.API}/tasks/${taskId}/comments`);
   }
 
-  getCommentsPaged(taskId: number, page: number, size: number): Observable<PageResponse<TaskComment>> {
+  getCommentsPaged(
+    taskId: number,
+    page: number,
+    size: number,
+  ): Observable<PageResponse<TaskComment>> {
     return this.http.get<PageResponse<TaskComment>>(`${this.API}/tasks/${taskId}/comments`, {
       params: new HttpParams().set('page', page).set('size', size),
     });
@@ -112,7 +120,11 @@ export class TaskService {
     return this.http.post<TaskComment>(`${this.API}/tasks/${taskId}/comments`, data);
   }
 
-  updateComment(taskId: number, commentId: number, data: TaskCommentRequest): Observable<TaskComment> {
+  updateComment(
+    taskId: number,
+    commentId: number,
+    data: TaskCommentRequest,
+  ): Observable<TaskComment> {
     return this.http.put<TaskComment>(`${this.API}/tasks/${taskId}/comments/${commentId}`, data);
   }
 

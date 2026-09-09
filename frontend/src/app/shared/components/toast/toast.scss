@@ -72,17 +72,23 @@
 
   &.success {
     background: linear-gradient(135deg, #059669, var(--success));
-    .toast-progress { background: rgba(255, 255, 255, 0.35); }
+    .toast-progress {
+      background: rgba(255, 255, 255, 0.35);
+    }
   }
 
   &.error {
     background: linear-gradient(135deg, #dc2626, var(--danger));
-    .toast-progress { background: rgba(255, 255, 255, 0.35); }
+    .toast-progress {
+      background: rgba(255, 255, 255, 0.35);
+    }
   }
 
   &.info {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-    .toast-progress { background: rgba(255, 255, 255, 0.35); }
+    .toast-progress {
+      background: rgba(255, 255, 255, 0.35);
+    }
   }
 }
 

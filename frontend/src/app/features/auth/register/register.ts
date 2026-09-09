@@ -25,19 +25,17 @@ export class RegisterComponent {
     if (this.submitting()) return;
     this.error.set('');
     this.submitting.set(true);
-    this.auth
-      .register({ name: this.name, email: this.email, password: this.password })
-      .subscribe({
-        next: () => {
-          this.toast.success('Conta criada com sucesso! Bem-vindo ao TaskFlow!');
-          this.router.navigate(['/dashboard']);
-        },
-        error: (err) => {
-          const msg = err.error?.message || 'Não foi possível criar a conta.';
-          this.error.set(msg);
-          this.toast.error(msg);
-          this.submitting.set(false);
-        },
-      });
+    this.auth.register({ name: this.name, email: this.email, password: this.password }).subscribe({
+      next: () => {
+        this.toast.success('Conta criada com sucesso! Bem-vindo ao TaskFlow!');
+        this.router.navigate(['/dashboard']);
+      },
+      error: (err) => {
+        const msg = err.error?.message || 'Não foi possível criar a conta.';
+        this.error.set(msg);
+        this.toast.error(msg);
+        this.submitting.set(false);
+      },
+    });
   }
 }
