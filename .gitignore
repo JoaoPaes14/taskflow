@@ -85,3 +85,6 @@ spring-boot-devtools.properties
 # Backup files
 *.bak
 *.backup
+
+# Agentes / contexto local (não versionar)
+AGENTS.md

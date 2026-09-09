@@ -29,6 +29,7 @@ export class WebSocketService implements OnDestroy {
 
     this.client = new Client({
       webSocketFactory: () => new SockJS(`/ws?token=${token}`),
+      connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

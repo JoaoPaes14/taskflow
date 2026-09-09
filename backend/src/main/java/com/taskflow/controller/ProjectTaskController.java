@@ -8,6 +8,8 @@ import com.taskflow.dto.ProjectTaskRequestDTO;
 import com.taskflow.dto.UpdateTaskStatusDTO;
 import com.taskflow.service.ProjectTaskService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -137,55 +139,45 @@ public class ProjectTaskController {
     @PostMapping("/projects/{projectId}/import")
     public ResponseEntity<List<ProjectTaskDTO>> importTasks(
             @PathVariable Long projectId,
-            @RequestBody List<ProjectTaskRequestDTO> requests,
+            @Valid @RequestBody @Size(max = 200) List<@Valid ProjectTaskRequestDTO> requests,
             @RequestAttribute("userId") Long userId) {
         List<ProjectTaskDTO> created = new java.util.ArrayList<>();
         for (ProjectTaskRequestDTO req : requests) {
-            try {
-                created.add(taskService.createTask(projectId, req, userId));
-            } catch (Exception ignored) {}
+            created.add(taskService.createTask(projectId, req, userId));
         }
         return ResponseEntity.ok(created);
     }
 
     @PatchMapping("/tasks/batch/archive")
     public ResponseEntity<Void> batchArchive(
-            @RequestBody List<Long> taskIds,
+            @Valid @RequestBody @Size(max = 100) List<@NotNull Long> taskIds,
             @RequestAttribute("userId") Long userId) {
-        for (Long taskId : taskIds) {
-            try {
-                taskService.archiveTask(taskId, userId);
-            } catch (Exception ignored) {}
-        }
+        taskService.archiveTasksBatch(taskIds, userId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/tasks/batch/status")
     public ResponseEntity<Void> batchUpdateStatus(
-            @RequestBody BatchStatusRequest request,
+            @Valid @RequestBody BatchStatusRequest request,
             @RequestAttribute("userId") Long userId) {
-        for (Long taskId : request.getTaskIds()) {
-            try {
-                taskService.updateTaskStatus(taskId,
-                        new UpdateTaskStatusDTO(request.getStatus(), null), userId);
-            } catch (Exception ignored) {}
-        }
+        taskService.updateTaskStatusBatch(request.getTaskIds(), request.getStatus(), userId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/tasks/batch")
     public ResponseEntity<Void> batchDelete(
-            @RequestBody List<Long> taskIds,
+            @Valid @RequestBody @Size(max = 100) List<@NotNull Long> taskIds,
             @RequestAttribute("userId") Long userId) {
-        for (Long taskId : taskIds) {
-            try {
-                taskService.deleteTask(taskId, userId);
-            } catch (Exception ignored) {}
-        }
+        taskService.deleteTasksBatch(taskIds, userId);
         return ResponseEntity.noContent().build();
     }
 
     private String escape(String s) {
-        return s != null ? s.replace("\"", "\"\"") : "";
+        if (s == null) return "";
+        String value = s.replace("\"", "\"\"");
+        if (!value.isEmpty() && "+-=@\t\r".indexOf(value.charAt(0)) >= 0) {
+            return "'" + value;
+        }
+        return value;
     }
 }

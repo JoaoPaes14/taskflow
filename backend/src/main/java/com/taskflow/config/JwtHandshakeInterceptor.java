@@ -21,14 +21,22 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) {
-        String query = request.getURI().getQuery();
-        if (query == null) return false;
-
         String token = null;
-        for (String param : query.split("&")) {
-            if (param.startsWith("token=")) {
-                token = param.substring(6);
-                break;
+
+        String authHeader = request.getHeaders().getFirst("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+
+        if (token == null) {
+            String query = request.getURI().getQuery();
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    if (param.startsWith("token=")) {
+                        token = param.substring(6);
+                        break;
+                    }
+                }
             }
         }
 

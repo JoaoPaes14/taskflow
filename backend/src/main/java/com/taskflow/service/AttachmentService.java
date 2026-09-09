@@ -22,8 +22,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,6 +53,8 @@ public class AttachmentService {
 
     private static final long MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
+    private static final Pattern SAFE_EXTENSION = Pattern.compile("[A-Za-z0-9]{1,10}");
+
     @Cacheable(value = "attachments", key = "#taskId")
     public List<AttachmentDTO> getAttachments(Long taskId, Long userId) {
         return attachmentRepository.findByTaskIdOrderByCreatedAtDesc(taskId).stream()
@@ -76,12 +80,15 @@ public class AttachmentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        String ext = getExtension(file.getOriginalFilename());
+        String ext = sanitizeExtension(file.getOriginalFilename());
         String storedName = UUID.randomUUID() + (ext.isEmpty() ? "" : "." + ext);
 
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         Files.createDirectories(uploadPath);
-        Path filePath = uploadPath.resolve(storedName);
+        Path filePath = uploadPath.resolve(storedName).normalize();
+        if (!filePath.startsWith(uploadPath)) {
+            throw new IllegalArgumentException("Invalid file name");
+        }
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         Attachment attachment = Attachment.builder()
@@ -102,7 +109,11 @@ public class AttachmentService {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Attachment not found"));
 
-        Path path = Paths.get(attachment.getStoragePath());
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Path path = Paths.get(attachment.getStoragePath()).normalize();
+        if (!path.startsWith(uploadPath)) {
+            throw new IllegalArgumentException("Invalid storage path");
+        }
         try {
             Files.deleteIfExists(path);
         } catch (IOException ignored) {}
@@ -139,8 +150,12 @@ public class AttachmentService {
                 .build();
     }
 
-    private String getExtension(String filename) {
+    private String sanitizeExtension(String filename) {
         if (filename == null || !filename.contains(".")) return "";
-        return filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+        String candidate = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        if (SAFE_EXTENSION.matcher(candidate).matches()) {
+            return candidate;
+        }
+        return "";
     }
 }

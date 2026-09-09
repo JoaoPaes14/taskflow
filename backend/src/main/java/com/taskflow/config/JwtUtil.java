@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,8 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
+    private static final int MIN_SECRET_LENGTH = 32;
+
     @Value("${jwt.secret}")
     private String secret;
 
@@ -21,14 +24,35 @@ public class JwtUtil {
 
     private SecretKey cachedKey;
 
+    @PostConstruct
+    void validateSecret() {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT_SECRET environment variable is required. Generate one with: openssl rand -base64 48");
+        }
+        if (secret.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException(
+                    "JWT_SECRET must be at least " + MIN_SECRET_LENGTH + " characters. Current: " + secret.length());
+        }
+        if (secret.contains("mude-esta-chave")) {
+            throw new IllegalStateException(
+                    "JWT_SECRET is set to a known default. Generate a strong secret: openssl rand -base64 48");
+        }
+    }
+
     private SecretKey getSigningKey() {
         if (cachedKey == null) {
+            byte[] keyBytes;
             try {
-                byte[] keyBytes = Decoders.BASE64.decode(secret);
-                cachedKey = Keys.hmacShaKeyFor(keyBytes);
+                keyBytes = Decoders.BASE64.decode(secret);
             } catch (Exception e) {
-                cachedKey = Keys.hmacShaKeyFor(secret.getBytes());
+                keyBytes = secret.getBytes();
             }
+            if (keyBytes.length < 32) {
+                throw new IllegalStateException(
+                        "JWT signing key must be at least 256 bits (32 bytes). Current key is " + keyBytes.length + " bytes.");
+            }
+            cachedKey = Keys.hmacShaKeyFor(keyBytes);
         }
         return cachedKey;
     }

@@ -13,6 +13,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -53,7 +55,7 @@ public class AttachmentController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(dto.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + dto.getOriginalFilename() + "\"")
+                        sanitizeContentDisposition(dto.getOriginalFilename()))
                 .body(resource);
     }
 
@@ -63,5 +65,12 @@ public class AttachmentController {
             @RequestAttribute("userId") Long userId) {
         attachmentService.delete(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    private String sanitizeContentDisposition(String originalFilename) {
+        String name = originalFilename != null ? originalFilename : "arquivo";
+        String ascii = name.replaceAll("[\\r\\n\\\"]", "_");
+        return "attachment; filename=\"" + ascii + "\"; filename*=UTF-8''"
+                + URLEncoder.encode(name, StandardCharsets.UTF_8).replace("+", "%20");
     }
 }

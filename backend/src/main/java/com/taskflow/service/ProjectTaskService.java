@@ -306,6 +306,84 @@ public class ProjectTaskService {
         broadcastTaskEvent(projectId, "TASK_DELETED", Map.of("taskId", taskId));
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
+    public void archiveTasksBatch(List<Long> taskIds, Long userId) {
+        if (taskIds == null || taskIds.isEmpty()) return;
+        for (Long taskId : taskIds) {
+            ProjectTask task = getOwnedTask(taskId);
+            requireAccess(task.getProject().getId(), userId);
+            task.setArchived(true);
+            taskRepository.save(task);
+            renormalizeColumn(task.getProject().getId(), task.getStatus());
+            broadcastTaskEvent(task.getProject().getId(), "TASK_ARCHIVED", Map.of("taskId", taskId));
+        }
+    }
+
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
+    public void updateTaskStatusBatch(List<Long> taskIds, ProjectTask.TaskStatus status, Long userId) {
+        if (taskIds == null || taskIds.isEmpty()) return;
+        for (Long taskId : taskIds) {
+            ProjectTask task = getOwnedTask(taskId);
+            requireAccess(task.getProject().getId(), userId);
+            Long projectId = task.getProject().getId();
+            ProjectTask.TaskStatus previousStatus = task.getStatus();
+
+            task.setStatus(status);
+            if (status != previousStatus) {
+                task.setPosition((int) taskRepository.countByProjectIdAndStatusAndArchived(projectId, status, false));
+            }
+
+            ProjectTask saved = taskRepository.save(task);
+
+            if (previousStatus != saved.getStatus()) {
+                renormalizeColumn(projectId, previousStatus);
+                renormalizeColumn(projectId, saved.getStatus());
+            }
+
+            User actor = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            String statusLabel = statusLabel(saved.getStatus());
+            activityService.record(saved.getProject(), actor, ProjectActivity.ActionType.TASK_MOVED,
+                    actor.getName() + " moveu a tarefa \"" + saved.getTitle() + "\" para " + statusLabel);
+
+            broadcastTaskEvent(projectId, "TASK_UPDATED", ProjectTaskDTO.fromEntity(saved));
+        }
+    }
+
+    @Caching(evict = {
+        @CacheEvict(value = "tasks", allEntries = true),
+        @CacheEvict(value = "projectStats", allEntries = true)
+    })
+    public void deleteTasksBatch(List<Long> taskIds, Long userId) {
+        if (taskIds == null || taskIds.isEmpty()) return;
+        User actor = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        for (Long taskId : taskIds) {
+            ProjectTask task = getOwnedTask(taskId);
+            requireAccess(task.getProject().getId(), userId);
+
+            ProjectTask.TaskStatus status = task.getStatus();
+            Project project = task.getProject();
+            Long projectId = project.getId();
+            String title = task.getTitle();
+
+            taskRepository.delete(task);
+            renormalizeColumn(projectId, status);
+
+            activityService.record(project, actor, ProjectActivity.ActionType.TASK_DELETED,
+                    actor.getName() + " excluiu a tarefa \"" + title + "\"");
+
+            broadcastTaskEvent(projectId, "TASK_DELETED", Map.of("taskId", taskId));
+        }
+        taskRepository.flush();
+    }
+
     private void broadcastTaskEvent(Long projectId, String event, Object data) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("event", event);
