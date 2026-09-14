@@ -8,12 +8,14 @@ import com.taskflow.dto.ProjectResponseDTO;
 import com.taskflow.service.ProjectService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/projects")
 @RequiredArgsConstructor
@@ -76,9 +78,14 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}/members")
-    public ResponseEntity<List<ProjectMemberDTO>> getMembers(
+    public ResponseEntity<?> getMembers(
             @PathVariable Long id,
-            @RequestAttribute("userId") Long userId) {
+            @RequestAttribute("userId") Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            return ResponseEntity.ok(projectService.getMembersPaged(id, userId, page, size));
+        }
         return ResponseEntity.ok(projectService.getMembers(id, userId));
     }
 

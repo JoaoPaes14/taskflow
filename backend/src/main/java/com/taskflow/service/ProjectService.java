@@ -16,6 +16,7 @@ import com.taskflow.repository.ProjectMemberRepository;
 import com.taskflow.repository.ProjectRepository;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -119,6 +121,16 @@ public class ProjectService {
         return projectMemberRepository.findByProjectId(projectId).stream()
                 .map(ProjectMemberDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    public PageResponseDTO<ProjectMemberDTO> getMembersPaged(Long projectId, Long userId, int page, int size) {
+        requireAccess(projectId, userId);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProjectMember> result = projectMemberRepository.findByProjectId(projectId, pageable);
+        List<ProjectMemberDTO> content = result.getContent().stream()
+                .map(ProjectMemberDTO::fromEntity)
+                .collect(Collectors.toList());
+        return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
     @CacheEvict(value = "members", key = "#projectId")

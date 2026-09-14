@@ -18,6 +18,7 @@ import com.taskflow.repository.ProjectTaskRepository;
 import com.taskflow.repository.TaskLabelRepository;
 import com.taskflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -101,6 +103,25 @@ public class ProjectTaskService {
         return taskRepository.findAssignedToUser(userId).stream()
                 .map(ProjectTaskDTO::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    public PageResponseDTO<ProjectTaskDTO> getMyTasksPaged(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProjectTask> result = taskRepository.findAssignedToUserPaged(userId, pageable);
+        List<ProjectTaskDTO> content = result.getContent().stream()
+                .map(ProjectTaskDTO::fromEntity)
+                .collect(Collectors.toList());
+        return PageResponseDTO.of(content, page, size, result.getTotalElements());
+    }
+
+    public PageResponseDTO<ProjectTaskDTO> searchTasksPaged(Long projectId, String query, Long userId, int page, int size) {
+        requireAccess(projectId, userId);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProjectTask> result = taskRepository.searchByFullTextPaged(projectId, query, pageable);
+        List<ProjectTaskDTO> content = result.getContent().stream()
+                .map(ProjectTaskDTO::fromEntity)
+                .collect(Collectors.toList());
+        return PageResponseDTO.of(content, page, size, result.getTotalElements());
     }
 
     public PageResponseDTO<ProjectTaskDTO> getTasksPaged(Long projectId, Long userId, int page, int size) {

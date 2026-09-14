@@ -223,13 +223,11 @@
           </svg>
           Filtros
           @if (hasActiveFilters()) {
-            <span class="badge-count">
-              {{
-                filterLabelIds().length +
-                  (filterAssigneeId() !== null ? 1 : 0) +
-                  (filterPriority() !== null ? 1 : 0)
-              }}
-            </span>
+            <span class="badge-count">{{
+              filterLabelIds().length +
+                (filterAssigneeId() !== null ? 1 : 0) +
+                (filterPriority() !== null ? 1 : 0)
+            }}</span>
           }
         </button>
         <button class="btn-activity" (click)="toggleActivity()">
@@ -404,250 +402,18 @@
 
             <div class="column-body">
               @for (task of getTasks(col.key); track task.id; let taskIndex = $index) {
-                <div
-                  class="task-card"
-                  [class.done]="task.status === 'DONE'"
-                  [class.overdue]="isOverdue(task)"
-                  [class.dragging]="draggingId === task.id"
-                  [class.selected]="isSelected(task.id)"
-                  draggable="true"
-                  (dragstart)="onDragStart($event, task)"
-                  (dragend)="onDragEnd()"
+                <app-task-card
+                  [task]="task"
+                  [isDragging]="draggingId === task.id"
+                  [isSelected]="isSelected(task.id)"
                   [style.animation-delay]="taskIndex * 0.03 + 's'"
-                >
-                  <div
-                    class="task-select"
-                    (click)="$event.stopPropagation(); toggleSelect(task.id)"
-                  >
-                    <div class="checkbox" [class.checked]="isSelected(task.id)">
-                      @if (isSelected(task.id)) {
-                        <svg
-                          width="10"
-                          height="10"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="3"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      }
-                    </div>
-                  </div>
-                  @if (task.labels && task.labels.length > 0) {
-                    <div class="task-labels-row">
-                      @for (label of task.labels; track label.id) {
-                        <span
-                          class="task-label-dot"
-                          [style.background]="label.color"
-                          [title]="label.name"
-                        ></span>
-                      }
-                    </div>
-                  }
-
-                  <div class="task-card-top">
-                    <span class="priority-badge" [class]="task.priority.toLowerCase()">
-                      {{ priorityLabel(task.priority) }}
-                    </span>
-                    @if (isOverdue(task)) {
-                      <span class="overdue-badge">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        Atrasado
-                      </span>
-                    }
-                  </div>
-
-                  <h3 class="task-title">{{ task.title }}</h3>
-                  @if (task.description) {
-                    <p class="task-desc">{{ task.description }}</p>
-                  }
-
-                  @if (task.subtasks && task.subtasks.length > 0) {
-                    <div class="task-subtasks-mini">
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="9 11 12 14 22 4" />
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-                      </svg>
-                      {{ task.subtasks.filter((s) => s.completed).length }}/{{
-                        task.subtasks.length
-                      }}
-                    </div>
-                  }
-
-                  <div class="task-meta">
-                    @if (task.assigneeName) {
-                      <span class="assignee" [title]="task.assigneeName">
-                        <span class="assignee-avatar">{{ getInitial(task.assigneeName) }}</span>
-                        {{ task.assigneeName }}
-                      </span>
-                    }
-                    @if (task.dueDate) {
-                      <span class="due" [class.overdue]="isOverdue(task)">
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        {{ task.dueDate }}
-                      </span>
-                    }
-                    @if (task.recurrence && task.recurrence !== 'NONE') {
-                      <span class="recurrence-badge">
-                        <svg
-                          width="11"
-                          height="11"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="23 4 23 10 17 10" />
-                          <polyline points="1 20 1 14 7 14" />
-                          <path
-                            d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
-                          />
-                        </svg>
-                        {{
-                          task.recurrence === 'DAILY'
-                            ? 'Diaria'
-                            : task.recurrence === 'WEEKLY'
-                              ? 'Semanal'
-                              : 'Mensal'
-                        }}
-                      </span>
-                    }
-                  </div>
-
-                  <div class="task-actions">
-                    @if (task.status !== 'TODO') {
-                      <button
-                        class="mini-btn"
-                        title="Mover para A fazer"
-                        (click)="changeStatus(task, 'TODO')"
-                      >
-                        <svg
-                          width="13"
-                          height="13"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="15 18 9 12 15 6" />
-                        </svg>
-                      </button>
-                    }
-                    @if (task.status !== 'IN_PROGRESS') {
-                      <button
-                        class="mini-btn"
-                        title="Em progresso"
-                        (click)="changeStatus(task, 'IN_PROGRESS')"
-                      >
-                        <svg
-                          width="13"
-                          height="13"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </button>
-                    }
-                    @if (task.status !== 'DONE') {
-                      <button
-                        class="mini-btn success"
-                        title="Concluir"
-                        (click)="changeStatus(task, 'DONE')"
-                      >
-                        <svg
-                          width="13"
-                          height="13"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </button>
-                    }
-                    <span class="mini-separator"></span>
-                    <button class="mini-btn edit" title="Editar" (click)="openEdit(task)">
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                    <button class="mini-btn delete" title="Excluir" (click)="onDelete(task)">
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <polyline points="3 6 5 6 21 6" />
-                        <path
-                          d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                  (toggleSelect)="toggleSelect($event)"
+                  (changeStatus)="changeStatus($event.task, $event.status)"
+                  (edit)="openEdit($event)"
+                  (delete)="onDelete($event)"
+                  (onDragStart)="onDragStart($event)"
+                  (onDragEnd)="onDragEnd()"
+                />
               } @empty {
                 <div class="column-empty">
                   <svg
@@ -779,232 +545,24 @@
         }
 
         @if (isEditing()) {
-          <div class="subtasks-section">
-            <h3 class="section-title">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="9 11 12 14 22 4" />
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-              </svg>
-              Subtarefas ({{ subtasks().filter((s) => s.completed).length }}/{{
-                subtasks().length
-              }})
-            </h3>
-            @if (subtasks().length > 0) {
-              <div class="subtask-progress-bar">
-                <div class="subtask-progress-fill" [style.width.%]="subtaskProgress()"></div>
-              </div>
-            }
-            @if (subtasksLoading()) {
-              <p class="section-empty">Carregando...</p>
-            } @else {
-              <div class="subtasks-list">
-                @for (sub of subtasks(); track sub.id) {
-                  <div class="subtask-item" [class.completed]="sub.completed">
-                    <button type="button" class="subtask-check" (click)="toggleSubtask(sub)">
-                      @if (sub.completed) {
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      }
-                    </button>
-                    <span class="subtask-title">{{ sub.title }}</span>
-                    <button type="button" class="subtask-delete" (click)="deleteSubtask(sub)">
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  </div>
-                }
-              </div>
-              <form (ngSubmit)="addSubtask()" class="subtask-form">
-                <input
-                  type="text"
-                  [(ngModel)]="newSubtaskTitle"
-                  name="newSubtask"
-                  placeholder="Nova subtarefa..."
-                  class="subtask-input"
-                />
-                <button
-                  type="submit"
-                  class="btn-primary btn-xs"
-                  [disabled]="!newSubtaskTitle.trim() || subtaskSubmitting()"
-                >
-                  {{ subtaskSubmitting() ? '...' : 'Adicionar' }}
-                </button>
-              </form>
-            }
-          </div>
+          <app-subtask-list
+            [subtasks]="subtasks()"
+            [loading]="subtasksLoading()"
+            [submitting]="subtaskSubmitting()"
+            (toggle)="toggleSubtask($event)"
+            (deleteSubtask)="deleteSubtask($event)"
+            (add)="addSubtask($event)"
+          />
         }
 
-        <div class="attachments-section">
-          <h3 class="section-title">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path
-                d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
-              />
-            </svg>
-            Anexos ({{ attachments().length }})
-          </h3>
-          @if (attachmentsLoading()) {
-            <p class="section-empty">Carregando...</p>
-          } @else {
-            @if (attachments().length > 0) {
-              <div class="attachments-list">
-                @for (att of attachments(); track att.id) {
-                  <div class="attachment-item">
-                    <span class="attachment-icon" [attr.data-type]="getFileIcon(att.contentType)">
-                      @switch (getFileIcon(att.contentType)) {
-                        @case ('image') {
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <polyline points="21 15 16 10 5 21" />
-                          </svg>
-                        }
-                        @case ('pdf') {
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="16" y1="13" x2="8" y2="13" />
-                            <line x1="16" y1="17" x2="8" y2="17" />
-                          </svg>
-                        }
-                        @default {
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
-                          </svg>
-                        }
-                      }
-                    </span>
-                    <div class="attachment-info">
-                      <span
-                        class="attachment-name"
-                        (click)="downloadAttachment(att)"
-                        title="Clique para baixar"
-                        >{{ att.originalFilename }}</span
-                      >
-                      <span class="attachment-meta"
-                        >{{ formatFileSize(att.fileSize) }} &middot; {{ att.uploadedByName }}</span
-                      >
-                    </div>
-                    <button
-                      type="button"
-                      class="attachment-delete"
-                      title="Remover"
-                      (click)="deleteAttachment(att)"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-            <div class="attachment-upload">
-              <label class="upload-btn" [class.disabled]="attachmentSubmitting()">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                {{ attachmentSubmitting() ? 'Enviando...' : 'Anexar arquivo' }}
-                <input
-                  type="file"
-                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip"
-                  (change)="uploadAttachment($event)"
-                  [disabled]="attachmentSubmitting()"
-                  hidden
-                />
-              </label>
-              <span class="upload-hint">Max 10MB</span>
-            </div>
-          }
-        </div>
+        <app-attachment-list
+          [attachments]="attachments()"
+          [loading]="attachmentsLoading()"
+          [uploading]="attachmentSubmitting()"
+          (download)="downloadAttachment($event)"
+          (deleteAttachment)="deleteAttachment($event)"
+          (upload)="uploadAttachment($event)"
+        />
 
         <div class="modal-actions">
           <button
@@ -1021,97 +579,20 @@
         </div>
 
         @if (isEditing()) {
-          <div class="comments-section">
-            <h3 class="section-title">Comentarios ({{ comments().length }})</h3>
-            @if (commentsLoading()) {
-              <p class="section-empty">Carregando comentarios...</p>
-            } @else {
-              <div class="comments-list">
-                @for (c of comments(); track c.id) {
-                  <div class="comment-item">
-                    <span class="comment-avatar">{{ getInitial(c.authorName) }}</span>
-                    <div class="comment-body">
-                      <div class="comment-head">
-                        <strong>{{ c.authorName }}</strong>
-                        <span class="comment-date">{{
-                          c.createdAt | date: 'dd/MM/yyyy HH:mm'
-                        }}</span>
-                        @if (isOwnComment(c)) {
-                          <div class="comment-actions">
-                            <button
-                              type="button"
-                              class="comment-action-btn"
-                              (click)="startEditComment(c)"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              class="comment-action-btn danger"
-                              (click)="deleteComment(c.taskId, c.id)"
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        }
-                      </div>
-                      @if (editingCommentId() === c.id) {
-                        <div class="comment-edit-form">
-                          <textarea
-                            rows="2"
-                            [(ngModel)]="editingCommentContent"
-                            name="editComment"
-                          ></textarea>
-                          <div class="comment-edit-btns">
-                            <button
-                              type="button"
-                              class="btn-primary btn-xs"
-                              (click)="saveEditComment(c.taskId, c.id)"
-                            >
-                              Salvar
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-ghost btn-xs"
-                              (click)="cancelEditComment()"
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        </div>
-                      } @else {
-                        <p>{{ c.content }}</p>
-                      }
-                    </div>
-                  </div>
-                } @empty {
-                  <p class="section-empty">Nenhum comentario ainda.</p>
-                }
-              </div>
-              @if (commentsHasMore()) {
-                <button type="button" class="load-more-btn" (click)="loadMoreComments()">
-                  Carregar mais comentarios
-                </button>
-              }
-            }
-            <div class="comment-form">
-              <textarea
-                rows="2"
-                id="comment-content"
-                [(ngModel)]="commentText"
-                name="commentContent"
-                placeholder="Escreva um comentario..."
-              ></textarea>
-              <button
-                type="button"
-                class="btn-primary btn-sm"
-                [disabled]="commentSubmitting() || !commentText.trim()"
-                (click)="submitComment()"
-              >
-                {{ commentSubmitting() ? 'Enviando...' : 'Comentar' }}
-              </button>
-            </div>
-          </div>
+          <app-comment-section
+            [comments]="comments()"
+            [loading]="commentsLoading()"
+            [hasMore]="commentsHasMore()"
+            [submitting]="commentSubmitting()"
+            [editingId]="editingCommentId()"
+            [currentUserId]="auth.currentUser()?.userId || 0"
+            (submitComment)="submitComment($event)"
+            (loadMore)="loadMoreComments()"
+            (startEdit)="startEditComment($event)"
+            (cancelEdit)="cancelEditComment()"
+            (saveEdit)="saveEditComment($event)"
+            (deleteComment)="deleteComment($event)"
+          />
         }
       </form>
     </div>
@@ -1119,11 +600,11 @@
 }
 
 @if (showActivity()) {
-  <div class="modal-overlay" (click)="closeActivity()">
+  <div class="modal-overlay" (click)="showActivity.set(false)">
     <div class="modal modal-wide" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>Atividade do projeto</h2>
-        <button class="modal-close" (click)="closeActivity()">&times;</button>
+        <button class="modal-close" (click)="showActivity.set(false)">&times;</button>
       </div>
       <div class="activity-list">
         @if (activitiesLoading()) {
@@ -1147,91 +628,13 @@
 }
 
 @if (showLabelsModal()) {
-  <div class="modal-overlay" (click)="closeLabelsModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Gerenciar Labels</h2>
-        <button class="modal-close" (click)="closeLabelsModal()">&times;</button>
-      </div>
-      <p class="labels-subtitle">Crie e gerencie labels para organizar as tarefas deste projeto.</p>
-
-      <form (ngSubmit)="createLabel()" class="label-form">
-        <div class="label-form-row">
-          <input
-            type="text"
-            [(ngModel)]="newLabelName"
-            name="newLabelName"
-            placeholder="Nome da label"
-            maxlength="50"
-            class="label-input"
-          />
-          <input
-            type="color"
-            [(ngModel)]="newLabelColor"
-            name="newLabelColor"
-            class="label-color-picker"
-          />
-          <button type="submit" class="btn-primary btn-sm" [disabled]="labelSubmitting()">
-            {{ labelSubmitting() ? '...' : 'Criar' }}
-          </button>
-        </div>
-      </form>
-
-      <div class="labels-list">
-        @for (label of projectLabels(); track label.id) {
-          <div class="label-item">
-            @if (editingLabelId() === label.id) {
-              <input type="color" [(ngModel)]="editingLabelColor" class="label-color-input" />
-              <input
-                type="text"
-                [(ngModel)]="editingLabelName"
-                class="label-name-input"
-                placeholder="Nome"
-              />
-              <button class="label-save" (click)="saveEditLabel(label)">Salvar</button>
-              <button class="label-cancel" (click)="cancelEditLabel()">Cancelar</button>
-            } @else {
-              <span class="label-dot" [style.background]="label.color"></span>
-              <span class="label-name">{{ label.name }}</span>
-              <span class="label-hex">{{ label.color }}</span>
-              <button class="label-edit" title="Editar label" (click)="startEditLabel(label)">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-              </button>
-              <button class="label-delete" title="Remover label" (click)="deleteLabel(label)">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            }
-          </div>
-        } @empty {
-          <p class="section-empty">Nenhuma label criada ainda.</p>
-        }
-      </div>
-    </div>
-  </div>
+  <app-label-manager
+    [labels]="projectLabels()"
+    (closed)="showLabelsModal.set(false)"
+    (createLabel)="onCreateLabel($event)"
+    (updateLabel)="onUpdateLabel($event)"
+    (deleteLabel)="onDeleteLabel($event)"
+  />
 }
 
 <app-confirm-modal
@@ -1245,57 +648,11 @@
 />
 
 @if (showMembers()) {
-  <div class="modal-overlay" (click)="showMembers.set(false)">
-    <div class="modal members-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Membros do projeto</h2>
-        <button class="modal-close" (click)="showMembers.set(false)">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="invite-row">
-          <input
-            type="email"
-            placeholder="Email do membro"
-            [(ngModel)]="inviteEmail"
-            (keyup.enter)="inviteMember()"
-          />
-          <button
-            class="btn-primary"
-            [disabled]="inviteSubmitting() || !inviteEmail.trim()"
-            (click)="inviteMember()"
-          >
-            {{ inviteSubmitting() ? '...' : 'Convidar' }}
-          </button>
-        </div>
-        <div class="members-list">
-          @for (m of members(); track m.userId) {
-            <div class="member-item">
-              <span class="member-avatar">{{ getInitial(m.name) }}</span>
-              <div class="member-info">
-                <span class="member-name">{{ m.name }}</span>
-                <span class="member-role">{{ m.role }}</span>
-              </div>
-              @if (m.userId !== project()?.createdById) {
-                <button class="btn-remove" (click)="removeMember(m.userId)" title="Remover">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              }
-            </div>
-          } @empty {
-            <p class="empty-text">Nenhum membro encontrado.</p>
-          }
-        </div>
-      </div>
-    </div>
-  </div>
+  <app-member-manager
+    [project]="project()!"
+    [members]="members()"
+    (closed)="showMembers.set(false)"
+    (invite)="inviteMember($event)"
+    (removeMember)="removeMember($event)"
+  />
 }

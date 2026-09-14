@@ -12,12 +12,14 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -26,8 +28,13 @@ public class ProjectTaskController {
     private final ProjectTaskService taskService;
 
     @GetMapping("/tasks/my")
-    public ResponseEntity<List<ProjectTaskDTO>> getMyTasks(
-            @RequestAttribute("userId") Long userId) {
+    public ResponseEntity<?> getMyTasks(
+            @RequestAttribute("userId") Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            return ResponseEntity.ok(taskService.getMyTasksPaged(userId, page, size));
+        }
         return ResponseEntity.ok(taskService.getMyTasks(userId));
     }
 
@@ -53,10 +60,15 @@ public class ProjectTaskController {
     }
 
     @GetMapping("/projects/{projectId}/search")
-    public ResponseEntity<List<ProjectTaskDTO>> search(
+    public ResponseEntity<?> search(
             @PathVariable Long projectId,
             @RequestParam String q,
-            @RequestAttribute("userId") Long userId) {
+            @RequestAttribute("userId") Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            return ResponseEntity.ok(taskService.searchTasksPaged(projectId, q, userId, page, size));
+        }
         return ResponseEntity.ok(taskService.searchTasks(projectId, q, userId));
     }
 

@@ -18,7 +18,9 @@ export class ThemeService {
     try {
       const stored = localStorage.getItem('taskflow-dark');
       if (stored !== null) return JSON.parse(stored);
-    } catch {}
+    } catch {
+      /* ignore parse errors */
+    }
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches;
   }
 

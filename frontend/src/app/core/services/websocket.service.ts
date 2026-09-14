@@ -5,7 +5,7 @@ import { NotificationService } from './notification.service';
 import { ToastService } from './toast.service';
 import { AuthService } from './auth.service';
 import { Notification } from '../models/notification.model';
-import { ProjectTask, TaskComment } from '../models/task.model';
+import { TaskComment } from '../models/task.model';
 
 export interface TaskEvent {
   event: string;

@@ -5,8 +5,6 @@ import {
   signal,
   OnInit,
   OnDestroy,
-  ElementRef,
-  ViewChild,
   HostListener,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +14,12 @@ import { SidebarComponent } from '../../../shared/components/sidebar/sidebar';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal';
 import { StatsComponent } from '../../dashboard/stats/stats';
 import { CalendarComponent } from '../calendar/calendar';
+import { TaskCardComponent } from './task-card';
+import { LabelManagerComponent } from './label-manager';
+import { MemberManagerComponent } from './member-manager';
+import { CommentSectionComponent } from './comment-section';
+import { SubtaskListComponent } from './subtask-list';
+import { AttachmentListComponent } from './attachment-list';
 import { ProjectService } from '../../../core/services/project.service';
 import { TaskService, ProjectStats } from '../../../core/services/task.service';
 import { LabelService } from '../../../core/services/label.service';
@@ -50,6 +54,12 @@ const COLUMNS: { key: TaskStatus; label: string }[] = [
     ConfirmModalComponent,
     StatsComponent,
     CalendarComponent,
+    TaskCardComponent,
+    LabelManagerComponent,
+    MemberManagerComponent,
+    CommentSectionComponent,
+    SubtaskListComponent,
+    AttachmentListComponent,
   ],
   templateUrl: './board.html',
   styleUrl: './board.scss',
@@ -63,7 +73,7 @@ export class Board implements OnInit, OnDestroy {
   private subtaskApi = inject(SubtaskService);
   private attachmentApi = inject(AttachmentService);
   private ws = inject(WebSocketService);
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
   private toast = inject(ToastService);
   private currentCommentTaskId: number | null = null;
 
@@ -271,14 +281,12 @@ export class Board implements OnInit, OnDestroy {
         return;
       }
     }
-
     if (event.key === 'n' || event.key === 'N') {
       if (!this.showModal()) {
         this.openCreate('TODO');
         event.preventDefault();
       }
     }
-
     if (event.key === '1') {
       this.scrollToColumn('TODO');
       event.preventDefault();
@@ -374,7 +382,6 @@ export class Board implements OnInit, OnDestroy {
   toggleStats(): void {
     this.showStats.set(!this.showStats());
   }
-
   toggleCalendar(): void {
     this.showCalendar.set(!this.showCalendar());
   }
@@ -478,21 +485,15 @@ export class Board implements OnInit, OnDestroy {
     this.searchResults.set(null);
   }
 
-  inviteMember(): void {
+  inviteMember(email: string): void {
     const projectId = this.project()?.id;
-    if (!projectId || !this.inviteEmail.trim()) return;
-    this.inviteSubmitting.set(true);
-    this.projects.inviteMember(projectId, this.inviteEmail.trim()).subscribe({
+    if (!projectId) return;
+    this.projects.inviteMember(projectId, email).subscribe({
       next: (member) => {
         this.members.update((list) => [...list, member]);
-        this.inviteEmail = '';
-        this.inviteSubmitting.set(false);
         this.toast.success('Membro adicionado!');
       },
-      error: (err) => {
-        this.toast.error(err.error?.message || 'Erro ao adicionar membro.');
-        this.inviteSubmitting.set(false);
-      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao adicionar membro.'),
     });
   }
 
@@ -598,14 +599,13 @@ export class Board implements OnInit, OnDestroy {
     });
   }
 
-  addSubtask(): void {
+  addSubtask(title: string): void {
     const taskId = this.editingId();
-    if (!taskId || !this.newSubtaskTitle.trim() || this.subtaskSubmitting()) return;
+    if (!taskId || this.subtaskSubmitting()) return;
     this.subtaskSubmitting.set(true);
-    this.subtaskApi.createSubtask(taskId, this.newSubtaskTitle.trim()).subscribe({
+    this.subtaskApi.createSubtask(taskId, title).subscribe({
       next: (created) => {
         this.subtasks.update((list) => [...list, created]);
-        this.newSubtaskTitle = '';
         this.subtaskSubmitting.set(false);
       },
       error: (err) => {
@@ -619,9 +619,8 @@ export class Board implements OnInit, OnDestroy {
     const taskId = this.editingId();
     if (!taskId) return;
     this.subtaskApi.toggleSubtask(taskId, sub.id).subscribe({
-      next: (updated) => {
-        this.subtasks.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
-      },
+      next: (updated) =>
+        this.subtasks.update((list) => list.map((s) => (s.id === updated.id ? updated : s))),
       error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar subtask.'),
     });
   }
@@ -630,9 +629,7 @@ export class Board implements OnInit, OnDestroy {
     const taskId = this.editingId();
     if (!taskId) return;
     this.subtaskApi.deleteSubtask(taskId, sub.id).subscribe({
-      next: () => {
-        this.subtasks.update((list) => list.filter((s) => s.id !== sub.id));
-      },
+      next: () => this.subtasks.update((list) => list.filter((s) => s.id !== sub.id)),
       error: (err) => this.toast.error(err.error?.message || 'Erro ao remover subtask.'),
     });
   }
@@ -650,10 +647,7 @@ export class Board implements OnInit, OnDestroy {
     });
   }
 
-  uploadAttachment(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input?.files?.[0];
-    if (!file) return;
+  uploadAttachment(file: File): void {
     const taskId = this.editingId();
     if (!taskId) return;
     this.attachmentSubmitting.set(true);
@@ -661,7 +655,6 @@ export class Board implements OnInit, OnDestroy {
       next: (created) => {
         this.attachments.update((list) => [created, ...list]);
         this.attachmentSubmitting.set(false);
-        input.value = '';
       },
       error: (err) => {
         this.attachmentSubmitting.set(false);
@@ -672,9 +665,7 @@ export class Board implements OnInit, OnDestroy {
 
   deleteAttachment(attachment: Attachment): void {
     this.attachmentApi.delete(attachment.id).subscribe({
-      next: () => {
-        this.attachments.update((list) => list.filter((a) => a.id !== attachment.id));
-      },
+      next: () => this.attachments.update((list) => list.filter((a) => a.id !== attachment.id)),
       error: (err) => this.toast.error(err.error?.message || 'Erro ao remover arquivo.'),
     });
   }
@@ -683,34 +674,14 @@ export class Board implements OnInit, OnDestroy {
     window.open(this.attachmentApi.getDownloadUrl(attachment.id), '_blank');
   }
 
-  formatFileSize(bytes: number): string {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  }
-
-  getFileIcon(contentType: string): string {
-    if (contentType.startsWith('image/')) return 'image';
-    if (contentType === 'application/pdf') return 'pdf';
-    if (contentType.includes('word') || contentType.includes('document')) return 'doc';
-    if (contentType.includes('excel') || contentType.includes('sheet')) return 'xls';
-    if (contentType === 'text/plain' || contentType === 'text/csv') return 'txt';
-    return 'file';
-  }
-
-  submitComment(): void {
+  submitComment(content: string): void {
     if (this.commentSubmitting()) return;
     const taskId = this.editingId();
     if (taskId === null) return;
-    if (!this.commentText.trim()) {
-      this.toast.error('Escreva um comentario antes de enviar.');
-      return;
-    }
     this.commentSubmitting.set(true);
-    this.tasks.addComment(taskId, { content: this.commentText.trim() }).subscribe({
+    this.tasks.addComment(taskId, { content }).subscribe({
       next: (comment) => {
         this.comments.update((list) => [...list, comment]);
-        this.commentText = '';
         this.commentSubmitting.set(false);
       },
       error: (err) => {
@@ -730,25 +701,22 @@ export class Board implements OnInit, OnDestroy {
     this.editingCommentContent = '';
   }
 
-  saveEditComment(taskId: number, commentId: number): void {
-    if (!this.editingCommentContent.trim()) return;
-    this.tasks
-      .updateComment(taskId, commentId, { content: this.editingCommentContent.trim() })
-      .subscribe({
-        next: (updated) => {
-          this.comments.update((list) => list.map((c) => (c.id === commentId ? updated : c)));
-          this.editingCommentId.set(null);
-          this.editingCommentContent = '';
-          this.toast.success('Comentario atualizado.');
-        },
-        error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar comentario.'),
-      });
+  saveEditComment(data: { taskId: number; commentId: number; content: string }): void {
+    this.tasks.updateComment(data.taskId, data.commentId, { content: data.content }).subscribe({
+      next: (updated) => {
+        this.comments.update((list) => list.map((c) => (c.id === data.commentId ? updated : c)));
+        this.editingCommentId.set(null);
+        this.editingCommentContent = '';
+        this.toast.success('Comentario atualizado.');
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar comentario.'),
+    });
   }
 
-  deleteComment(taskId: number, commentId: number): void {
-    this.tasks.deleteComment(taskId, commentId).subscribe({
+  deleteComment(data: { taskId: number; commentId: number }): void {
+    this.tasks.deleteComment(data.taskId, data.commentId).subscribe({
       next: () => {
-        this.comments.update((list) => list.filter((c) => c.id !== commentId));
+        this.comments.update((list) => list.filter((c) => c.id !== data.commentId));
         this.toast.success('Comentario excluido.');
       },
       error: (err) => this.toast.error(err.error?.message || 'Erro ao excluir comentario.'),
@@ -779,10 +747,6 @@ export class Board implements OnInit, OnDestroy {
         this.toast.error(err.error?.message || 'Erro ao carregar atividades.');
       },
     });
-  }
-
-  closeActivity(): void {
-    this.showActivity.set(false);
   }
 
   closeModal(): void {
@@ -853,9 +817,8 @@ export class Board implements OnInit, OnDestroy {
     if (task.status === newStatus) return;
     const target = this.getTasks(newStatus).length;
     this.tasks.updateTaskStatus(task.id, { status: newStatus, position: target }).subscribe({
-      next: (updated) => {
-        this.tasksList.update((list) => list.map((t) => (t.id === updated.id ? updated : t)));
-      },
+      next: (updated) =>
+        this.tasksList.update((list) => list.map((t) => (t.id === updated.id ? updated : t))),
       error: (err) => this.toast.error(err.error?.message || 'Erro ao mover tarefa.'),
     });
   }
@@ -880,7 +843,6 @@ export class Board implements OnInit, OnDestroy {
     this.confirmOpen.set(false);
     this.confirmAction.set(null);
   }
-
   confirmConfirm(): void {
     const action = this.confirmAction();
     this.confirmOpen.set(false);
@@ -888,7 +850,6 @@ export class Board implements OnInit, OnDestroy {
     if (action) action();
   }
 
-  // --- Labels ---
   openLabelsModal(): void {
     this.newLabelName = '';
     this.newLabelColor = '#6366f1';
@@ -896,69 +857,35 @@ export class Board implements OnInit, OnDestroy {
     this.showLabelsModal.set(true);
   }
 
-  closeLabelsModal(): void {
-    this.showLabelsModal.set(false);
-  }
-
-  createLabel(): void {
-    if (this.labelSubmitting()) return;
+  onCreateLabel(data: { name: string; color: string }): void {
     const project = this.project();
     if (!project) return;
-    if (!this.newLabelName.trim()) {
-      this.toast.error('Nome da label e obrigatorio.');
-      return;
-    }
-    this.labelSubmitting.set(true);
-    this.labels
-      .createLabel(project.id, {
-        name: this.newLabelName.trim(),
-        color: this.newLabelColor,
-      })
-      .subscribe({
-        next: (created) => {
-          this.projectLabels.update((list) => [...list, created]);
-          this.newLabelName = '';
-          this.labelSubmitting.set(false);
-          this.toast.success('Label criada!');
-        },
-        error: (err) => {
-          this.labelSubmitting.set(false);
-          this.toast.error(err.error?.message || 'Erro ao criar label.');
-        },
-      });
+    this.labels.createLabel(project.id, { name: data.name, color: data.color }).subscribe({
+      next: (created) => {
+        this.projectLabels.update((list) => [...list, created]);
+        this.toast.success('Label criada!');
+      },
+      error: (err) => this.toast.error(err.error?.message || 'Erro ao criar label.'),
+    });
   }
 
-  startEditLabel(label: TaskLabel): void {
-    this.editingLabelId.set(label.id);
-    this.editingLabelName = label.name;
-    this.editingLabelColor = label.color;
-  }
-
-  cancelEditLabel(): void {
-    this.editingLabelId.set(null);
-    this.editingLabelName = '';
-    this.editingLabelColor = '#6366f1';
-  }
-
-  saveEditLabel(label: TaskLabel): void {
+  onUpdateLabel(data: { label: TaskLabel; name: string; color: string }): void {
     const project = this.project();
-    if (!project || !this.editingLabelName.trim()) return;
+    if (!project) return;
     this.labels
-      .updateLabel(project.id, label.id, {
-        name: this.editingLabelName.trim(),
-        color: this.editingLabelColor,
-      })
+      .updateLabel(project.id, data.label.id, { name: data.name, color: data.color })
       .subscribe({
         next: (updated) => {
-          this.projectLabels.update((list) => list.map((l) => (l.id === label.id ? updated : l)));
-          this.editingLabelId.set(null);
+          this.projectLabels.update((list) =>
+            list.map((l) => (l.id === data.label.id ? updated : l)),
+          );
           this.toast.success('Label atualizada.');
         },
         error: (err) => this.toast.error(err.error?.message || 'Erro ao atualizar label.'),
       });
   }
 
-  deleteLabel(label: TaskLabel): void {
+  onDeleteLabel(label: TaskLabel): void {
     const project = this.project();
     if (!project) return;
     this.labels.deleteLabel(project.id, label.id).subscribe({
@@ -1062,17 +989,14 @@ export class Board implements OnInit, OnDestroy {
   setFilterAssignee(userId: number | null): void {
     this.filterAssigneeId.set(userId);
   }
-
   setFilterPriority(p: TaskPriority | null): void {
     this.filterPriority.set(p);
   }
-
   clearFilters(): void {
     this.filterLabelIds.set([]);
     this.filterAssigneeId.set(null);
     this.filterPriority.set(null);
   }
-
   hasActiveFilters(): boolean {
     return (
       this.filterLabelIds().length > 0 ||
@@ -1085,10 +1009,10 @@ export class Board implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard']);
   }
 
-  onDragStart(event: DragEvent, task: ProjectTask): void {
-    this.draggingId = task.id;
-    event.dataTransfer?.setData('text/plain', String(task.id));
-    event.dataTransfer!.effectAllowed = 'move';
+  onDragStart(data: { event: DragEvent; task: ProjectTask }): void {
+    this.draggingId = data.task.id;
+    data.event.dataTransfer?.setData('text/plain', String(data.task.id));
+    data.event.dataTransfer!.effectAllowed = 'move';
   }
 
   onDragOver(event: DragEvent, status: TaskStatus): void {
@@ -1098,9 +1022,7 @@ export class Board implements OnInit, OnDestroy {
   }
 
   onDragLeave(status: TaskStatus): void {
-    if (this.dragOverColumn() === status) {
-      this.dragOverColumn.set(null);
-    }
+    if (this.dragOverColumn() === status) this.dragOverColumn.set(null);
   }
 
   onDrop(event: DragEvent, status: TaskStatus): void {
@@ -1108,9 +1030,7 @@ export class Board implements OnInit, OnDestroy {
     this.dragOverColumn.set(null);
     if (this.draggingId !== null) {
       const task = this.tasksList().find((t) => t.id === this.draggingId);
-      if (task && task.status !== status) {
-        this.changeStatus(task, status);
-      }
+      if (task && task.status !== status) this.changeStatus(task, status);
     }
     this.draggingId = null;
   }
@@ -1122,26 +1042,6 @@ export class Board implements OnInit, OnDestroy {
 
   getInitial(name: string): string {
     return (name || '?').charAt(0).toUpperCase();
-  }
-
-  priorityLabel(p: TaskPriority): string {
-    return { LOW: 'Baixa', MEDIUM: 'Media', HIGH: 'Alta' }[p] || p;
-  }
-
-  assigneeName(userId: number | undefined): string {
-    if (!userId) return '';
-    return this.members().find((m) => m.userId === userId)?.name || '';
-  }
-
-  isOverdue(task: ProjectTask): boolean {
-    if (!task.dueDate || task.status === 'DONE') return false;
-    return new Date(task.dueDate) < new Date();
-  }
-
-  subtaskProgress(): number {
-    const list = this.subtasks();
-    if (list.length === 0) return 0;
-    return Math.round((list.filter((s) => s.completed).length / list.length) * 100);
   }
 
   private handleError(err: unknown): void {

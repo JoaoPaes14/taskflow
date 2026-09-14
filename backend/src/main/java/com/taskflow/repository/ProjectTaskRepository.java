@@ -49,4 +49,10 @@ public interface ProjectTaskRepository extends JpaRepository<ProjectTask, Long> 
 
     @Query("SELECT DISTINCT t FROM ProjectTask t JOIN FETCH t.createdBy LEFT JOIN FETCH t.assignee JOIN FETCH t.project LEFT JOIN FETCH t.labels WHERE t.assignee.id = :userId AND t.archived = false ORDER BY t.dueDate ASC NULLS LAST")
     List<ProjectTask> findAssignedToUser(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT t FROM ProjectTask t JOIN FETCH t.createdBy LEFT JOIN FETCH t.assignee JOIN FETCH t.project LEFT JOIN FETCH t.labels WHERE t.assignee.id = :userId AND t.archived = false ORDER BY t.dueDate ASC NULLS LAST")
+    Page<ProjectTask> findAssignedToUserPaged(@Param("userId") Long userId, Pageable pageable);
+
+    @Query(value = "SELECT * FROM project_tasks t WHERE t.project_id = :projectId AND t.archived = false AND MATCH(t.title, t.description) AGAINST (:query IN NATURAL LANGUAGE MODE) ORDER BY t.position ASC", countQuery = "SELECT COUNT(*) FROM project_tasks t WHERE t.project_id = :projectId AND t.archived = false AND MATCH(t.title, t.description) AGAINST (:query IN NATURAL LANGUAGE MODE)", nativeQuery = true)
+    Page<ProjectTask> searchByFullTextPaged(@Param("projectId") Long projectId, @Param("query") String query, Pageable pageable);
 }
